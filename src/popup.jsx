@@ -122,7 +122,7 @@ function App() {
 
   return (
     <div className="container">
-      <h2>💕Edge History Helper</h2>
+      <h2>💕Browser History Helper</h2>
       <h3>Use auto-generated tags🎈 to help you filter your history</h3>
       <Button type="primary" onClick={handleGenerateTags}>
         Generate tags

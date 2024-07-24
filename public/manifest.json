@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Edge History Helper",
-  "description": "Transformers.js | Sample browser extension",
+  "name": "Browser History Helper",
+  "description": "Help you manage your history",
   "version": "0.0.1",
   "permissions": [
     "activeTab",
