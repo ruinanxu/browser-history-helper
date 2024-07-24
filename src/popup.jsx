@@ -4,13 +4,57 @@ import "./Popup.css";
 import { Avatar, List, Button, Tag, Select } from "antd";
 import { candidate_labels } from "./constants.js";
 
+const Filter = React.memo(({ selectedTags, handleFilterChange, options }) => (
+  <Select
+    mode="multiple"
+    style={{ width: "100%" }}
+    placeholder="Filter with tags"
+    onChange={handleFilterChange}
+    value={selectedTags}
+    options={options}
+  />
+));
+
+const HistoryItemList = React.memo(({ dataState, handleItemClick }) => {
+  const titleStyle = {
+    display: "-webkit-box",
+    WebkitLineClamp: "2",
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  };
+
+  return (
+    <List
+      itemLayout="horizontal"
+      dataSource={dataState}
+      renderItem={(item) => (
+        <List.Item onClick={() => handleItemClick(item)}>
+          <List.Item.Meta
+            avatar={<Avatar src={`${new URL(item.url).origin}/favicon.ico`} />}
+            title={
+              <a href="" style={titleStyle}>
+                {item.title}
+              </a>
+            }
+            description={item.tags.map((tag) => (
+              <Tag key={tag}>{tag}</Tag>
+            ))}
+          />
+        </List.Item>
+      )}
+    />
+  );
+});
+
 function App() {
   const [dataState, setDataState] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
 
   useEffect(() => {
-    const loadedData = handleLoadData();
-    setDataState(loadedData);
+    handleLoadData().then((loadedData) => {
+      setDataState(loadedData);
+    });
   }, []);
 
   const handleGenerateTags = () => {
@@ -25,36 +69,47 @@ function App() {
           console.log("page", page);
           console.log("received user data", response);
           const storageKey = page.url;
-          if (!localStorage.getItem(storageKey)) {
-            const storageValue = JSON.stringify({
-              title: page.title,
-              url: page.url,
-              tags: response,
-              lastVisitTime: page.lastVisitTime,
-            });
-            localStorage.setItem(storageKey, storageValue);
-          } else {
-            console.log(`Storage key ${storageKey} already exists. Skipping.`);
-          }
+          chrome.storage.local.get([storageKey], function (result) {
+            if (
+              Object.keys(result).length === 0 &&
+              result.constructor === Object
+            ) {
+              const storageValue = {
+                title: page.title,
+                url: page.url,
+                tags: response,
+                lastVisitTime: page.lastVisitTime,
+              };
+              chrome.storage.local.set(
+                { [storageKey]: storageValue },
+                function () {
+                  console.log(`Data for ${storageKey} stored successfully.`);
+                }
+              );
+            } else {
+              console.log(
+                `Storage key ${storageKey} already exists. Skipping.`
+              );
+            }
+          });
         });
       });
     });
   };
 
   const handleLoadData = () => {
-    let allData = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      const value = localStorage.getItem(key);
-      try {
-        // Attempt to parse the stored value as JSON
-        allData[key] = JSON.parse(value);
-      } catch (e) {
-        // If parsing fails, store the raw value
-        allData[key] = value;
-      }
-    }
-    return Object.values(allData);
+    return new Promise((resolve) => {
+      chrome.storage.local.get(null, function (items) {
+        const allData = Object.values(items).map((item) => {
+          try {
+            return JSON.parse(item);
+          } catch (e) {
+            return item;
+          }
+        });
+        resolve(allData);
+      });
+    });
   };
 
   const handleItemClick = (item) => {
@@ -62,71 +117,8 @@ function App() {
     chrome.tabs.create({ url: item.url });
   };
 
-  const options = candidate_labels.map((label) => ({
-    value: label,
-    label: label,
-  }));
-
   const handleFilterChange = (newSelectedTags) => {
     setSelectedTags(newSelectedTags);
-  };
-
-  const filteredDataState = dataState
-    .filter((item) => selectedTags.every((tag) => item.tags.includes(tag)))
-    .sort((a, b) => b.lastVisitTime - a.lastVisitTime);
-
-  const Filter = () => (
-    <Select
-      mode="multiple"
-      style={{
-        width: "100%",
-      }}
-      placeholder="Filter with tags"
-      onChange={handleFilterChange}
-      value={selectedTags}
-      options={options}
-    />
-  );
-
-  const HistoryItemList = ({ dataState, handleItemClick }) => {
-    const titleStyle = {
-      display: "-webkit-box",
-      WebkitLineClamp: "2", // Limit to two lines
-      WebkitBoxOrient: "vertical",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-    };
-    return (
-      <List
-        itemLayout="horizontal"
-        dataSource={dataState}
-        renderItem={(item, index) => (
-          <List.Item
-            onClick={() => {
-              handleItemClick(item);
-            }}
-          >
-            <List.Item.Meta
-              avatar={
-                <Avatar src={`${new URL(item.url).origin}/favicon.ico`} />
-              }
-              title={
-                <a href="" style={titleStyle}>
-                  {item.title}
-                </a>
-              }
-              description={
-                Array.isArray(item.tags) ? (
-                  item.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)
-                ) : (
-                  <Tag>{item.tags}</Tag>
-                )
-              }
-            />
-          </List.Item>
-        )}
-      />
-    );
   };
 
   return (
@@ -136,10 +128,16 @@ function App() {
       <Button type="primary" onClick={handleGenerateTags}>
         Generate tags
       </Button>
-      <Filter />
+      <Filter
+        selectedTags={selectedTags}
+        handleFilterChange={handleFilterChange}
+        options={candidate_labels.map((label) => ({ value: label, label }))}
+      />
       <div className="scrollable-list-container">
         <HistoryItemList
-          dataState={filteredDataState}
+          dataState={dataState.filter((item) =>
+            selectedTags.every((tag) => item.tags.includes(tag))
+          ).sort((a, b) => b.lastVisitTime - a.lastVisitTime)}
           handleItemClick={handleItemClick}
         />
       </div>

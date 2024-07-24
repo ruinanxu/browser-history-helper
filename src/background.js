@@ -43,6 +43,7 @@ const classify = async (text) => {
 // Listen for messages from the UI, process it, and send the result back.
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log("sender", sender);
+  console.log("message", message);
   if (message.action !== "classify") return; // Ignore messages that are not meant for classification.
 
   // Run model prediction asynchronously
@@ -58,4 +59,72 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // see https://stackoverflow.com/a/46628145 for more information
   return true;
 });
-//////////////////////////////////////////////////////////////
+
+// Utility function to convert Chrome API callbacks to Promises for easier async handling.
+const promisify = (chromeFunction, ...args) =>
+  new Promise((resolve, reject) => {
+    chromeFunction(...args, (result) => {
+      if (chrome.runtime.lastError) {
+        // Handle Chrome API errors.
+        reject(chrome.runtime.lastError);
+      } else {
+        // Successfully resolve the promise with the result.
+        resolve(result);
+      }
+    });
+  });
+
+// Asynchronously stores a history item in local storage if it doesn't already exist.
+const storeHistoryItem = async (historyItem, tags) => {
+  try {
+    const storageKey = historyItem.url;
+    const result = await promisify(chrome.storage.local.get, [storageKey]);
+    if (!result[storageKey]) {
+      const storageValue = {
+        title: historyItem.title,
+        url: historyItem.url,
+        tags: tags,
+        lastVisitTime: historyItem.lastVisitTime,
+      };
+      await promisify(chrome.storage.local.set, { [storageKey]: storageValue });
+      console.log(`Data for ${storageKey} stored successfully.`);
+    } else {
+      console.log(`Storage key ${storageKey} already exists. Skipping.`);
+    }
+  } catch (error) {
+    console.error(`Error storing data for ${historyItem.url}:`, error);
+  }
+};
+
+// Listener for when a user visits a new URL.
+chrome.history.onVisited.addListener(async (historyItem) => {
+  // Check if the history item has a title.
+  if (historyItem.title) {
+    try {
+      const response = await classify(historyItem.title);
+      await storeHistoryItem(historyItem, response);
+    } catch (error) {
+      console.error(`Error processing history item ${historyItem.url}:`, error);
+    }
+  }
+});
+
+// Listener for when the extension is installed.
+chrome.runtime.onInstalled.addListener(async (details) => {
+  if (details.reason === "install") {
+    try {
+      const historyItems = await promisify(chrome.history.search, {
+        text: "",
+        maxResults: 20,
+      });
+      for (const item of historyItems) {
+        if (item.title) {
+          const response = await classify(item.title);
+          await storeHistoryItem(item, response);
+        }
+      }
+    } catch (error) {
+      console.error("Error initializing history items on install:", error);
+    }
+  }
+});
