@@ -14,7 +14,7 @@ function App() {
   }, []);
 
   const handleGenerateTags = () => {
-    chrome.history.search({ text: "", maxResults: 50 }, async function (data) {
+    chrome.history.search({ text: "", maxResults: 5 }, async function (data) {
       data.forEach(async function (page) {
         const message = {
           action: "classify",
@@ -24,13 +24,18 @@ function App() {
         chrome.runtime.sendMessage(message, (response) => {
           console.log("page", page);
           console.log("received user data", response);
-          const storageKey = page.id;
-          const storageValue = JSON.stringify({
-            title: page.title,
-            url: page.url,
-            tags: response,
-          });
-          localStorage.setItem(storageKey, storageValue);
+          const storageKey = page.url;
+          if (!localStorage.getItem(storageKey)) {
+            const storageValue = JSON.stringify({
+              title: page.title,
+              url: page.url,
+              tags: response,
+              lastVisitTime: page.lastVisitTime,
+            });
+            localStorage.setItem(storageKey, storageValue);
+          } else {
+            console.log(`Storage key ${storageKey} already exists. Skipping.`);
+          }
         });
       });
     });
@@ -66,9 +71,9 @@ function App() {
     setSelectedTags(newSelectedTags);
   };
 
-  const filteredDataState = dataState.filter((item) =>
-    selectedTags.every((tag) => item.tags.includes(tag))
-  );
+  const filteredDataState = dataState
+    .filter((item) => selectedTags.every((tag) => item.tags.includes(tag)))
+    .sort((a, b) => b.lastVisitTime - a.lastVisitTime);
 
   const Filter = () => (
     <Select
@@ -105,7 +110,11 @@ function App() {
               avatar={
                 <Avatar src={`${new URL(item.url).origin}/favicon.ico`} />
               }
-              title={<a href="" style={titleStyle}>{item.title}</a>}
+              title={
+                <a href="" style={titleStyle}>
+                  {item.title}
+                </a>
+              }
               description={
                 Array.isArray(item.tags) ? (
                   item.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)

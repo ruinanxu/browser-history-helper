@@ -8,5 +8,5 @@ export const candidate_labels = [
   "Business & Finance",
   "Entertainment & Music",
   "Family & Relationships",
-  "Politics & Government"
+  "Politics & Government",
 ];
