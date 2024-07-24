@@ -36,13 +36,6 @@ body {
     align-items: center;
 }
 
-#text {
-    width: 100%;
-    padding: 8px;
-    font-size: 20px;
-    margin-bottom: 8px;
-}
-
 #output {
     font-size: 20px;
     font-family: 'Roboto Mono', monospace;
