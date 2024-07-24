@@ -1,6 +1,7 @@
 // background.js - Handles requests from the UI, runs the model, then sends back a response
 
 import { pipeline, env } from '@xenova/transformers';
+import { candidate_labels } from "./constants.js";
 
 // Skip initial check for local models, since we are not loading any local models.
 env.allowLocalModels = false;
@@ -32,19 +33,6 @@ const classify = async (text) => {
         // e.g., you can send `data` back to the UI to indicate a progress bar
         // console.log('progress', data)
     });
-
-    const candidate_labels = [
-        "Society & Culture",
-        "Science & Mathematics",
-        "Health",
-        "Education & Reference",
-        "Computers & Internet",
-        "Sports",
-        "Business & Finance",
-        "Entertainment & Music",
-        "Family & Relationships",
-        "Politics & Government"
-    ];
 
     // Actually run the model on the input text
     let result = await model(text, candidate_labels);

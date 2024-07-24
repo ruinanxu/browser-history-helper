@@ -9,7 +9,8 @@
     "scripting",
     "contextMenus",
     "storage",
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "favicon"
   ],
   "background": {
     "service_worker": "background.js",
