@@ -63,12 +63,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Utility function to convert Chrome API callbacks to Promises for easier async handling.
 const promisify = (chromeFunction, ...args) =>
   new Promise((resolve, reject) => {
-    chromeFunction(...args, (result) => {
+    // Bind `chromeFunction` to ensure it has the correct `this` context
+    const boundFunction = chromeFunction.bind(chrome.storage.local);
+    boundFunction(...args, (result) => {
       if (chrome.runtime.lastError) {
-        // Handle Chrome API errors.
         reject(chrome.runtime.lastError);
       } else {
-        // Successfully resolve the promise with the result.
         resolve(result);
       }
     });
