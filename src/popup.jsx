@@ -1,15 +1,27 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import "./Popup.css";
-import { Avatar, List, Button, Input, Tag, theme, Select } from "antd";
+import {
+  Avatar,
+  List,
+  Button,
+  Input,
+  Tag,
+  theme,
+  Select,
+  Typography,
+  ConfigProvider,
+} from "antd";
 import { candidateLabels } from "./constants.js";
 import { TweenOneGroup } from "rc-tween-one";
-import { PlusOutlined } from "@ant-design/icons";
+import { PlusOutlined, HistoryOutlined } from "@ant-design/icons";
+
+const { Title } = Typography;
 
 const Filter = React.memo(({ selectedTags, handleFilterChange, options }) => (
   <Select
     mode="multiple"
-    style={{ width: "100%" }}
+    style={{ width: "100%"}}
     placeholder="Filter with tags"
     onChange={handleFilterChange}
     value={selectedTags}
@@ -27,7 +39,7 @@ const HistoryItemList = React.memo(({ dataState, handleItemClick }) => {
   };
 
   return (
-    <div className="scrollable-list-container">
+    <div className="scrollable-list-container scrollable-container">
       <List
         itemLayout="horizontal"
         dataSource={dataState}
@@ -55,7 +67,6 @@ const HistoryItemList = React.memo(({ dataState, handleItemClick }) => {
 
 const Customization = ({ tags, setTags }) => {
   const { token } = theme.useToken();
-
   const [inputVisible, setInputVisible] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const inputRef = useRef(null);
@@ -67,8 +78,7 @@ const Customization = ({ tags, setTags }) => {
   }, [inputVisible]);
 
   const handleClose = (removedTag) => {
-    const newTags = tags.filter((tag) => tag !== removedTag);
-    setTags(newTags);
+    setTags(tags.filter((tag) => tag !== removedTag));
   };
 
   const showInput = () => {
@@ -106,7 +116,6 @@ const Customization = ({ tags, setTags }) => {
     </span>
   );
 
-  const tagChild = tags ? tags.map(forMap) : [];
   const tagPlusStyle = {
     background: token.colorBgContainer,
     borderStyle: "dashed",
@@ -114,11 +123,7 @@ const Customization = ({ tags, setTags }) => {
 
   return (
     <>
-      <div
-        style={{
-          marginBottom: 16,
-        }}
-      >
+      <div className="scrollable-tags-container scrollable-container">
         <TweenOneGroup
           appear={false}
           enter={{
@@ -139,7 +144,7 @@ const Customization = ({ tags, setTags }) => {
             }
           }}
         >
-          {tagChild}
+          {tags ? tags.map(forMap) : []}
         </TweenOneGroup>
       </div>
       {inputVisible ? (
@@ -249,27 +254,47 @@ function App() {
   };
 
   return (
-    <div className="container">
-      <h2>💕Browser History Helper</h2>
-      <h3>Use auto-generated tags🎈 to help you filter your history</h3>
-      <Customization tags={tags} setTags={setTags} />
-      <Button type="primary" onClick={handleGenerateTags}>
-        Save and Generate tags
-      </Button>
-      <Filter
-        selectedTags={selectedTags}
-        handleFilterChange={handleFilterChange}
-        options={tags.map((label) => ({ value: label, label }))}
-      />
-      <HistoryItemList
-        dataState={dataState
-          .filter((item) =>
-            selectedTags.every((tag) => item.tags.includes(tag))
-          )
-          .sort((a, b) => b.lastVisitTime - a.lastVisitTime)}
-        handleItemClick={handleItemClick}
-      />
-    </div>
+    <ConfigProvider
+      theme={{
+        token: {
+          controlHeight: 24,
+        },
+      }}
+    >
+      <div className="container">
+        <Title level={3} className="title" style={{ marginBottom: "0.375rem" }}>
+          <HistoryOutlined style={{ fontSize: '20px', marginRight: '8px', marginTop: '2px' }}/>
+          Browser History Helper
+        </Title>
+        <div className="section customize-section">
+          <Title level={5} style={{ marginBottom: "0.375rem" }}>
+            ✨Customize your tags
+          </Title>
+          <Customization tags={tags} setTags={setTags} />
+          <Button type="primary" className="btn" onClick={handleGenerateTags}>
+            Save and Generate tags
+          </Button>
+        </div>
+        <div className="section result-section">
+          <Title level={5} style={{ marginBottom: "0.375rem" }}>
+            🪄See your history
+          </Title>
+          <Filter
+            selectedTags={selectedTags}
+            handleFilterChange={handleFilterChange}
+            options={tags.map((label) => ({ value: label, label }))}
+          />
+          <HistoryItemList
+            dataState={dataState
+              .filter((item) =>
+                selectedTags.every((tag) => item.tags.includes(tag))
+              )
+              .sort((a, b) => b.lastVisitTime - a.lastVisitTime)}
+            handleItemClick={handleItemClick}
+          />
+        </div>
+      </div>
+    </ConfigProvider>
   );
 }
 

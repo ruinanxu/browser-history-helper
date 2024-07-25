@@ -1,5 +1,4 @@
 /* Styles go here */
-
 * {
   padding: 0;
   margin: 0;
@@ -27,7 +26,7 @@ h2 {
 html,
 body {
   min-width: 400px;
-  min-height: 500px;
+  min-height: 520px;
 }
 
 body {
@@ -36,25 +35,42 @@ body {
   align-items: center;
 }
 
-#output {
-  font-size: 20px;
-  font-family: "Roboto Mono", monospace;
-  height: 100px;
-}
-
-.scrollable-list-container {
-  height: 300px;
+.scrollable-container {
   overflow-y: auto;
   border: 1px solid #ccc;
   border-radius: 4px;
   padding: 0 10px;
 }
 
-.scrollable-list-container::-webkit-scrollbar {
+.scrollable-list-container {
+  height: 300px;
+  margin-top: 5px;
+}
+
+.scrollable-tags-container {
+  height: 44px;
+  margin-bottom: 6px;
+}
+
+.scrollable-container::-webkit-scrollbar {
   width: 5px;
 }
 
-.scrollable-list-container::-webkit-scrollbar-thumb {
+.scrollable-container::-webkit-scrollbar-thumb {
   background-color: #ccc;
   border-radius: 5px;
+}
+
+.btn {
+  height: 20px;
+  margin-left: 95px;
+}
+
+.customize-section {
+  margin-bottom: 2px;
+}
+
+.title {
+  display: flex;
+  justify-content: center;
 }

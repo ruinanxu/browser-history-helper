@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Browser History Helper",
-  "description": "Help you manage your history",
+  "description": "Use auto-generated tags🎈 to help you filter your history",
   "version": "0.0.1",
   "permissions": [
     "activeTab",
