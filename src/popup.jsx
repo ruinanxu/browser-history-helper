@@ -42,9 +42,9 @@ const HistoryItemList = React.memo(({ dataState, handleItemClick }) => {
                   {item.title}
                 </a>
               }
-              description={item.tags?.map((tag) => (
-                <Tag key={tag}>{tag}</Tag>
-              )) || []}
+              description={
+                item.tags?.map((tag) => <Tag key={tag}>{tag}</Tag>) || []
+              }
             />
           </List.Item>
         )}
@@ -53,17 +53,128 @@ const HistoryItemList = React.memo(({ dataState, handleItemClick }) => {
   );
 });
 
+const Customization = ({ tags, setTags }) => {
+  const { token } = theme.useToken();
+
+  const [inputVisible, setInputVisible] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (inputVisible) {
+      inputRef.current?.focus();
+    }
+  }, [inputVisible]);
+
+  const handleClose = (removedTag) => {
+    const newTags = tags.filter((tag) => tag !== removedTag);
+    setTags(newTags);
+  };
+
+  const showInput = () => {
+    setInputVisible(true);
+  };
+
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
+  };
+
+  const handleInputConfirm = () => {
+    if (inputValue && tags.indexOf(inputValue) === -1) {
+      setTags([...tags, inputValue]);
+    }
+    setInputVisible(false);
+    setInputValue("");
+  };
+
+  const forMap = (tag) => (
+    <span
+      key={tag}
+      style={{
+        display: "inline-block",
+      }}
+    >
+      <Tag
+        closable
+        onClose={(e) => {
+          e.preventDefault();
+          handleClose(tag);
+        }}
+      >
+        {tag}
+      </Tag>
+    </span>
+  );
+
+  const tagChild = tags ? tags.map(forMap) : [];
+  const tagPlusStyle = {
+    background: token.colorBgContainer,
+    borderStyle: "dashed",
+  };
+
+  return (
+    <>
+      <div
+        style={{
+          marginBottom: 16,
+        }}
+      >
+        <TweenOneGroup
+          appear={false}
+          enter={{
+            scale: 0.8,
+            opacity: 0,
+            type: "from",
+            duration: 100,
+          }}
+          leave={{
+            opacity: 0,
+            width: 0,
+            scale: 0,
+            duration: 200,
+          }}
+          onEnd={(e) => {
+            if (e.type === "appear" || e.type === "enter") {
+              e.target.style = "display: inline-block";
+            }
+          }}
+        >
+          {tagChild}
+        </TweenOneGroup>
+      </div>
+      {inputVisible ? (
+        <Input
+          ref={inputRef}
+          type="text"
+          size="small"
+          style={{
+            width: 78,
+          }}
+          value={inputValue}
+          onChange={handleInputChange}
+          onBlur={handleInputConfirm}
+          onPressEnter={handleInputConfirm}
+        />
+      ) : (
+        <Tag onClick={showInput} style={tagPlusStyle}>
+          <PlusOutlined /> New Tag
+        </Tag>
+      )}
+    </>
+  );
+};
+
 function App() {
   const [dataState, setDataState] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
-  const [labels, setLabels] = useState([]);
+  const [tags, setTags] = useState([]);
 
   useEffect(() => {
-    chrome.storage.local.get(['customLabels'], function(result) {
+    chrome.storage.local.get(["customLabels"], function (result) {
       if (result.customLabels) {
-        setLabels(result.customLabels);
+        setTags(result.customLabels);
       } else {
-        setLabels(candidateLabels);
+        setTags(candidateLabels);
       }
     });
   }, []);
@@ -75,7 +186,10 @@ function App() {
   }, []);
 
   const handleGenerateTags = () => {
-    chrome.history.search({ text: "", maxResults: 5 }, async function (data) {
+    chrome.storage.local.set({ customLabels: tags }, function () {
+      console.log("customLabels updated successfully.");
+    });
+    chrome.history.search({ text: "", maxResults: 20 }, async function (data) {
       data.forEach(async function (page) {
         const message = {
           action: "classify",
@@ -88,27 +202,18 @@ function App() {
           console.log("received user data", response);
           const storageKey = page.url;
           chrome.storage.local.get([storageKey], function (result) {
-            if (
-              Object.keys(result).length === 0 &&
-              result.constructor === Object
-            ) {
-              const storageValue = {
-                title: page.title,
-                url: page.url,
-                tags: response,
-                lastVisitTime: page.lastVisitTime,
-              };
-              chrome.storage.local.set(
-                { [storageKey]: storageValue },
-                function () {
-                  console.log(`Data for ${storageKey} stored successfully.`);
-                }
-              );
-            } else {
-              console.log(
-                `Storage key ${storageKey} already exists. Skipping.`
-              );
-            }
+            const storageValue = {
+              title: page.title,
+              url: page.url,
+              tags: response,
+              lastVisitTime: page.lastVisitTime,
+            };
+            chrome.storage.local.set(
+              { [storageKey]: storageValue },
+              function () {
+                console.log(`Data for ${storageKey} stored successfully.`);
+              }
+            );
           });
         });
       });
@@ -147,14 +252,14 @@ function App() {
     <div className="container">
       <h2>💕Browser History Helper</h2>
       <h3>Use auto-generated tags🎈 to help you filter your history</h3>
-      {/* <Customization /> */}
+      <Customization tags={tags} setTags={setTags} />
       <Button type="primary" onClick={handleGenerateTags}>
-        Generate tags
+        Save and Generate tags
       </Button>
       <Filter
         selectedTags={selectedTags}
         handleFilterChange={handleFilterChange}
-        options={labels.map((label) => ({ value: label, label }))}
+        options={tags.map((label) => ({ value: label, label }))}
       />
       <HistoryItemList
         dataState={dataState
