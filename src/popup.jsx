@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import "./Popup.css";
-import { Avatar, List, Button, Tag, Select } from "antd";
-import { candidate_labels } from "./constants.js";
+import { Avatar, List, Button, Input, Tag, theme, Select } from "antd";
+import { candidateLabels } from "./constants.js";
+import { TweenOneGroup } from "rc-tween-one";
+import { PlusOutlined } from "@ant-design/icons";
 
 const Filter = React.memo(({ selectedTags, handleFilterChange, options }) => (
   <Select
@@ -11,7 +13,7 @@ const Filter = React.memo(({ selectedTags, handleFilterChange, options }) => (
     placeholder="Filter with tags"
     onChange={handleFilterChange}
     value={selectedTags}
-    options={options}
+    options={options.filter((label) => !selectedTags.includes(label.value))}
   />
 ));
 
@@ -25,33 +27,46 @@ const HistoryItemList = React.memo(({ dataState, handleItemClick }) => {
   };
 
   return (
-    <List
-      itemLayout="horizontal"
-      dataSource={dataState}
-      renderItem={(item) => (
-        <List.Item onClick={() => handleItemClick(item)}>
-          <List.Item.Meta
-            avatar={<Avatar src={`${new URL(item.url).origin}/favicon.ico`} />}
-            title={
-              <a href="" style={titleStyle}>
-                {item.title}
-              </a>
-            }
-            description={
-              (item.tags || []).map((tag) => (
+    <div className="scrollable-list-container">
+      <List
+        itemLayout="horizontal"
+        dataSource={dataState}
+        renderItem={(item) => (
+          <List.Item onClick={() => handleItemClick(item)}>
+            <List.Item.Meta
+              avatar={
+                <Avatar src={`${new URL(item.url).origin}/favicon.ico`} />
+              }
+              title={
+                <a href="" style={titleStyle}>
+                  {item.title}
+                </a>
+              }
+              description={item.tags?.map((tag) => (
                 <Tag key={tag}>{tag}</Tag>
-              ))
-            }
-          />
-        </List.Item>
-      )}
-    />
+              )) || []}
+            />
+          </List.Item>
+        )}
+      />
+    </div>
   );
 });
 
 function App() {
   const [dataState, setDataState] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
+  const [labels, setLabels] = useState([]);
+
+  useEffect(() => {
+    chrome.storage.local.get(['customLabels'], function(result) {
+      if (result.customLabels) {
+        setLabels(result.customLabels);
+      } else {
+        setLabels(candidateLabels);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     handleLoadData().then((loadedData) => {
@@ -103,14 +118,18 @@ function App() {
   const handleLoadData = () => {
     return new Promise((resolve) => {
       chrome.storage.local.get(null, function (items) {
-        const allData = Object.values(items).map((item) => {
-          try {
-            return JSON.parse(item);
-          } catch (e) {
-            return item;
-          }
-        });
-        resolve(allData);
+        console.log("items", items);
+        const filteredData = Object.entries(items)
+          .filter(([key]) => key !== "customLabels")
+          .map(([_, value]) => {
+            try {
+              return JSON.parse(value);
+            } catch (e) {
+              return value;
+            }
+          });
+        console.log("filteredData", filteredData);
+        resolve(filteredData);
       });
     });
   };
@@ -128,24 +147,23 @@ function App() {
     <div className="container">
       <h2>💕Browser History Helper</h2>
       <h3>Use auto-generated tags🎈 to help you filter your history</h3>
+      {/* <Customization /> */}
       <Button type="primary" onClick={handleGenerateTags}>
         Generate tags
       </Button>
       <Filter
         selectedTags={selectedTags}
         handleFilterChange={handleFilterChange}
-        options={candidate_labels.map((label) => ({ value: label, label }))}
+        options={labels.map((label) => ({ value: label, label }))}
       />
-      <div className="scrollable-list-container">
-        <HistoryItemList
-          dataState={dataState
-            .filter((item) =>
-              selectedTags.every((tag) => item.tags.includes(tag))
-            )
-            .sort((a, b) => b.lastVisitTime - a.lastVisitTime)}
-          handleItemClick={handleItemClick}
-        />
-      </div>
+      <HistoryItemList
+        dataState={dataState
+          .filter((item) =>
+            selectedTags.every((tag) => item.tags.includes(tag))
+          )
+          .sort((a, b) => b.lastVisitTime - a.lastVisitTime)}
+        handleItemClick={handleItemClick}
+      />
     </div>
   );
 }

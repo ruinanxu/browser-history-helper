@@ -1,4 +1,4 @@
-export const candidate_labels = [
+export const candidateLabels = [
   "Society & Culture",
   "Science & Mathematics",
   "Health",

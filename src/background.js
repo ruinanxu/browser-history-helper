@@ -1,7 +1,7 @@
 // background.js - Handles requests from the UI, runs the model, then sends back a response
 
 import { pipeline, env } from "@xenova/transformers";
-import { candidate_labels } from "./constants.js";
+import { candidateLabels } from "./constants.js";
 
 // Skip initial check for local models, since we are not loading any local models.
 env.allowLocalModels = false;
@@ -27,6 +27,19 @@ class PipelineSingleton {
 // Create generic classify function, which will be reused for the different types of events.
 const classify = async (text) => {
   console.log('classifying', text);
+  // Retrieve custom labels from local storage
+  let customLabels;
+  try {
+    const result = await promisify(chrome.storage.local.get, ['customLabels']);
+    customLabels = result.customLabels;
+  } catch (error) {
+    console.error("Error retrieving custom labels:", error);
+  }
+
+  const labelsToUse = customLabels || candidateLabels;
+
+  console.log('customLabels', customLabels);
+
   // Get the pipeline instance. This will load and build the model when run for the first time.
   let model = await PipelineSingleton.getInstance((data) => {
     // You can track the progress of the pipeline creation here.
@@ -35,7 +48,12 @@ const classify = async (text) => {
   });
 
   // Actually run the model on the input text
-  let result = await model(text, candidate_labels);
+  let result;
+  try {
+    result = await model(text, labelsToUse);
+  } catch (error) {
+    console.error("Error calling model:", error);
+  }
   return result.labels.slice(0, 3);
 };
 
@@ -114,6 +132,9 @@ chrome.history.onVisited.addListener(async (historyItem) => {
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === "install") {
     try {
+      // Set customLabels in chrome.storage.local
+      await promisify(chrome.storage.local.set, { 'customLabels': candidateLabels });
+
       const historyItems = await promisify(chrome.history.search, {
         text: "",
         maxResults: 20,
