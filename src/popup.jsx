@@ -37,9 +37,11 @@ const HistoryItemList = React.memo(({ dataState, handleItemClick }) => {
                 {item.title}
               </a>
             }
-            description={item.tags.map((tag) => (
-              <Tag key={tag}>{tag}</Tag>
-            ))}
+            description={
+              (item.tags || []).map((tag) => (
+                <Tag key={tag}>{tag}</Tag>
+              ))
+            }
           />
         </List.Item>
       )}
@@ -64,6 +66,7 @@ function App() {
           action: "classify",
           text: page.title,
         };
+        console.log("sending message", message);
 
         chrome.runtime.sendMessage(message, (response) => {
           console.log("page", page);
@@ -135,9 +138,11 @@ function App() {
       />
       <div className="scrollable-list-container">
         <HistoryItemList
-          dataState={dataState.filter((item) =>
-            selectedTags.every((tag) => item.tags.includes(tag))
-          ).sort((a, b) => b.lastVisitTime - a.lastVisitTime)}
+          dataState={dataState
+            .filter((item) =>
+              selectedTags.every((tag) => item.tags.includes(tag))
+            )
+            .sort((a, b) => b.lastVisitTime - a.lastVisitTime)}
           handleItemClick={handleItemClick}
         />
       </div>
