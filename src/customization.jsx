@@ -3,6 +3,7 @@ import { Input, Tag, Typography, Button } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { TweenOneGroup } from "rc-tween-one";
 import { theme } from "antd";
+import { colors } from "./constants";
 
 const { Title } = Typography;
 
@@ -38,10 +39,15 @@ const Customization = ({ tags, setTags }) => {
     setInputValue("");
   };
 
+  const getRandomColor = () => {
+    return colors[Math.floor(Math.random() * colors.length)];
+  };
+
   const forMap = (tag) => (
     <span key={tag} style={{ display: "inline-block" }}>
       <Tag
         closable
+        color={getRandomColor()}
         onClose={(e) => {
           e.preventDefault();
           handleClose(tag);
@@ -93,14 +99,14 @@ const Customization = ({ tags, setTags }) => {
   );
 };
 
-export const CustomizationSection = ({ tags, setTags, handleGenerateTags }) => (
+export const CustomizationSection = ({ tags, setTags, handleGenerateTags, handleSaveNewTags }) => (
   <div className="section customize-section">
     <Title level={5} style={{ marginBottom: "0.375rem" }}>
       ✨ Customize your tags
     </Title>
     <Customization tags={tags} setTags={setTags} />
     <Button type="primary" className="btn" onClick={handleGenerateTags}>
-      Save and Generate tags
+      Save new tags
     </Button>
   </div>
 );

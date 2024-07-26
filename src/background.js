@@ -38,8 +38,6 @@ const classify = async (text) => {
 
   const labelsToUse = customLabels || candidateLabels;
 
-  console.log('customLabels', customLabels);
-
   // Get the pipeline instance. This will load and build the model when run for the first time.
   let model = await PipelineSingleton.getInstance((data) => {
     // You can track the progress of the pipeline creation here.

@@ -1,18 +1,47 @@
 import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import "./Popup.css";
-import { Typography, ConfigProvider } from "antd";
+import { Typography, ConfigProvider, Menu as AntMenu } from "antd";
 import { candidateLabels } from "./constants.js";
-import { HistoryOutlined } from "@ant-design/icons";
+import { HistoryOutlined, SettingOutlined } from "@ant-design/icons";
 import { CustomizationSection } from "./customization.jsx";
 import { ResultSection } from "./result.jsx";
 
 const { Title } = Typography;
 
+const items = [
+  {
+    label: "Results",
+    key: "results",
+    icon: <HistoryOutlined />,
+  },
+  {
+    label: "Customization",
+    key: "customization",
+    icon: <SettingOutlined />,
+  },
+];
+
+const Menu = ({ current, setCurrent }) => {
+  const onClick = (e) => {
+    console.log("click ", e);
+    setCurrent(e.key);
+  };
+  return (
+    <AntMenu
+      onClick={onClick}
+      selectedKeys={[current]}
+      mode="horizontal"
+      items={items}
+    />
+  );
+};
+
 function App() {
   const [dataState, setDataState] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
   const [tags, setTags] = useState([]);
+  const [currentTab, setCurrentTab] = useState("results");
 
   useEffect(() => {
     chrome.storage.local.get(["customLabels"], function (result) {
@@ -30,10 +59,14 @@ function App() {
     });
   }, []);
 
-  const handleGenerateTags = () => {
+  const handleSaveNewTags = () => {
     chrome.storage.local.set({ customLabels: tags }, function () {
       console.log("customLabels updated successfully.");
     });
+  };
+
+  const handleGenerateTags = () => {
+    handleSaveNewTags();
     chrome.history.search({ text: "", maxResults: 20 }, async function (data) {
       data.forEach(async function (page) {
         const message = {
@@ -41,7 +74,6 @@ function App() {
           text: page.title,
         };
         console.log("sending message", message);
-
         chrome.runtime.sendMessage(message, (response) => {
           console.log("page", page);
           console.log("received user data", response);
@@ -97,29 +129,35 @@ function App() {
     <ConfigProvider
       theme={{
         token: {
-          controlHeight: 24,
+          controlHeight: 28,
         },
       }}
     >
       <div className="container">
-        <Title level={3} className="title" style={{ marginBottom: "0.375rem" }}>
-          <HistoryOutlined
-            style={{ fontSize: "20px", marginRight: "8px", marginTop: "2px" }}
-          />
+        <Title
+          level={3}
+          className="title"
+          style={{ marginBottom: "6px", marginTop: "6px" }}
+        >
           Browser History Helper
         </Title>
-        <CustomizationSection
-          tags={tags}
-          setTags={setTags}
-          handleGenerateTags={handleGenerateTags}
-        />
-        <ResultSection
-          selectedTags={selectedTags}
-          handleFilterChange={handleFilterChange}
-          tags={tags}
-          dataState={dataState}
-          handleItemClick={handleItemClick}
-        />
+        <Menu current={currentTab} setCurrent={setCurrentTab} />
+        {currentTab === "results" ? (
+          <ResultSection
+            selectedTags={selectedTags}
+            handleFilterChange={handleFilterChange}
+            tags={tags}
+            dataState={dataState}
+            handleItemClick={handleItemClick}
+          />
+        ) : (
+          <CustomizationSection
+            tags={tags}
+            setTags={setTags}
+            handleGenerateTags={handleGenerateTags}
+            handleSaveNewTags={handleSaveNewTags}
+          />
+        )}
       </div>
     </ConfigProvider>
   );
