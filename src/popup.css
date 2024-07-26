@@ -63,7 +63,9 @@ body {
 
 .btn {
   height: 20px;
-  margin-left: 95px;
+  margin-left: 130px;
+  font-size: 12px;
+  padding: 0 8px;
 }
 
 .customize-section {
