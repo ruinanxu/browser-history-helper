@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import "./Popup.css";
 import { Typography, ConfigProvider, Menu as AntMenu } from "antd";
-import { candidateLabels } from "./constants.js";
+import { candidateLabels, maxResults } from "./constants.js";
 import { HistoryOutlined, SettingOutlined } from "@ant-design/icons";
 import { CustomizationSection } from "./customization.jsx";
 import { ResultSection } from "./result.jsx";
@@ -23,10 +23,14 @@ const items = [
 ];
 
 const Menu = ({ current, setCurrent }) => {
-  const onClick = (e) => {
-    console.log("click ", e);
-    setCurrent(e.key);
-  };
+  const onClick = useCallback(
+    (e) => {
+      console.log("click ", e);
+      setCurrent(e.key);
+    },
+    [setCurrent]
+  );
+
   return (
     <AntMenu
       onClick={onClick}
@@ -42,65 +46,94 @@ function App() {
   const [selectedTags, setSelectedTags] = useState([]);
   const [tags, setTags] = useState([]);
   const [currentTab, setCurrentTab] = useState("results");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    chrome.storage.local.get(["customLabels"], function (result) {
-      if (result.customLabels) {
-        setTags(result.customLabels);
-      } else {
-        setTags(candidateLabels);
-      }
-    });
+    const fetchCustomLabels = async () => {
+      const result = await new Promise((resolve) => {
+        chrome.storage.local.get(["customLabels"], resolve);
+      });
+      setTags(result.customLabels || candidateLabels);
+    };
+
+    fetchCustomLabels();
   }, []);
 
   useEffect(() => {
-    handleLoadData().then((loadedData) => {
+    const loadData = async () => {
+      const loadedData = await handleLoadData();
       setDataState(loadedData);
-    });
+    };
+
+    loadData();
   }, []);
 
-  const handleSaveNewTags = () => {
-    chrome.storage.local.set({ customLabels: tags }, function () {
+  useEffect(() => {
+    if (loading) {
+      handleGenerateTags();
+    }
+  }, [loading]);
+
+  const handleButtonClick = useCallback(() => {
+    setLoading(true);
+  }, []);
+
+  const handleSaveNewTags = useCallback(() => {
+    chrome.storage.local.set({ customLabels: tags }, () => {
       console.log("customLabels updated successfully.");
     });
-  };
+  }, [tags]);
 
-  const handleGenerateTags = () => {
+  const handleGenerateTags = useCallback(async () => {
     handleSaveNewTags();
-    chrome.history.search({ text: "", maxResults: 20 }, async function (data) {
-      data.forEach(async function (page) {
-        const message = {
-          action: "classify",
-          text: page.title,
-        };
-        console.log("sending message", message);
-        chrome.runtime.sendMessage(message, (response) => {
-          console.log("page", page);
-          console.log("received user data", response);
-          const storageKey = page.url;
-          chrome.storage.local.get([storageKey], function (result) {
-            const storageValue = {
-              title: page.title,
-              url: page.url,
-              tags: response,
-              lastVisitTime: page.lastVisitTime,
-            };
-            chrome.storage.local.set(
-              { [storageKey]: storageValue },
-              function () {
-                console.log(`Data for ${storageKey} stored successfully.`);
-              }
-            );
-          });
+    const historyItems = await new Promise((resolve) => {
+      const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      chrome.history.search(
+        { text: "", maxResults: maxResults, startTime: oneMonthAgo },
+        resolve
+      );
+    });
+
+    for (const [index, page] of historyItems.entries()) {
+      const message = {
+        action: "classify",
+        text: page.title,
+      };
+      console.log(`------------${index}-------------`);
+      console.log("sending message", message);
+
+      const response = await new Promise((resolve) => {
+        chrome.runtime.sendMessage(message, resolve);
+      });
+
+      console.log("received user data", response);
+
+      const storageKey = page.url;
+      const storageValue = {
+        title: page.title,
+        url: page.url,
+        tags: response,
+        lastVisitTime: page.lastVisitTime,
+      };
+
+      await new Promise((resolve) => {
+        chrome.storage.local.set({ [storageKey]: storageValue }, () => {
+          console.log(`Data for ${storageKey} stored successfully.`);
+          resolve();
         });
       });
-    });
-  };
+    }
 
-  const handleLoadData = () => {
+    setLoading(false);
+    // Refresh data
+    const loadedData = await handleLoadData();
+    setDataState(loadedData);
+  }, [handleSaveNewTags]);
+
+  const handleLoadData = useCallback(() => {
+    console.log("loading data");
     return new Promise((resolve) => {
-      chrome.storage.local.get(null, function (items) {
-        console.log("items", items);
+      chrome.storage.local.get(null, (items) => {
         const filteredData = Object.entries(items)
           .filter(([key]) => key !== "customLabels")
           .map(([_, value]) => {
@@ -110,20 +143,19 @@ function App() {
               return value;
             }
           });
-        console.log("filteredData", filteredData);
         resolve(filteredData);
       });
     });
-  };
+  }, []);
 
-  const handleItemClick = (item) => {
+  const handleItemClick = useCallback((item) => {
     console.log("item", item);
     chrome.tabs.create({ url: item.url });
-  };
+  }, []);
 
-  const handleFilterChange = (newSelectedTags) => {
+  const handleFilterChange = useCallback((newSelectedTags) => {
     setSelectedTags(newSelectedTags);
-  };
+  }, []);
 
   return (
     <ConfigProvider
@@ -153,8 +185,9 @@ function App() {
         ) : (
           <CustomizationSection
             tags={tags}
+            loading={loading}
             setTags={setTags}
-            handleGenerateTags={handleGenerateTags}
+            handleButtonClick={handleButtonClick}
             handleSaveNewTags={handleSaveNewTags}
           />
         )}

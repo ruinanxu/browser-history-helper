@@ -1,7 +1,7 @@
 // background.js - Handles requests from the UI, runs the model, then sends back a response
 
 import { pipeline, env } from "@xenova/transformers";
-import { candidateLabels } from "./constants.js";
+import { candidateLabels, maxResults } from "./constants.js";
 
 // Skip initial check for local models, since we are not loading any local models.
 env.allowLocalModels = false;
@@ -133,9 +133,13 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       // Set customLabels in chrome.storage.local
       await promisify(chrome.storage.local.set, { 'customLabels': candidateLabels });
 
+      // Calculate the timestamp for one month ago
+      const oneMonthAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+
       const historyItems = await promisify(chrome.history.search, {
         text: "",
-        maxResults: 20,
+        maxResults: maxResults,
+        startTime: oneMonthAgo
       });
       for (const item of historyItems) {
         if (item.title) {

@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Input, Tag, Typography, Button } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { Input, Tag, Typography, Button, Spin } from "antd";
+import { PlusOutlined, LoadingOutlined } from "@ant-design/icons";
 import { TweenOneGroup } from "rc-tween-one";
 import { theme } from "antd";
 import { colors } from "./constants";
 
 const { Title } = Typography;
 
-const Customization = ({ tags, setTags }) => {
+const Customization = ({ tags, loading, setTags, handleButtonClick }) => {
   const { token } = theme.useToken();
   const [inputVisible, setInputVisible] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -79,34 +79,49 @@ const Customization = ({ tags, setTags }) => {
           {tags ? tags.map(forMap) : []}
         </TweenOneGroup>
       </div>
-      {inputVisible ? (
-        <Input
-          ref={inputRef}
-          type="text"
-          size="small"
-          style={{ width: 78 }}
-          value={inputValue}
-          onChange={handleInputChange}
-          onBlur={handleInputConfirm}
-          onPressEnter={handleInputConfirm}
-        />
-      ) : (
-        <Tag onClick={showInput} style={tagPlusStyle}>
-          <PlusOutlined /> New Tag
-        </Tag>
-      )}
+      <div className="footer">
+        {inputVisible ? (
+          <Input
+            ref={inputRef}
+            type="text"
+            size="small"
+            style={{ width: 78 }}
+            value={inputValue}
+            onChange={handleInputChange}
+            onBlur={handleInputConfirm}
+            onPressEnter={handleInputConfirm}
+          />
+        ) : (
+          <Tag onClick={showInput} style={tagPlusStyle}>
+            <PlusOutlined /> New Tag
+          </Tag>
+        )}
+        <div>
+          {loading && <Spin className="spin" indicator={<LoadingOutlined spin />} />}
+          <Button type="primary" className="btn" onClick={handleButtonClick}>
+            Save new tags
+          </Button>
+        </div>
+      </div>
     </>
   );
 };
 
-export const CustomizationSection = ({ tags, setTags, handleGenerateTags, handleSaveNewTags }) => (
+export const CustomizationSection = ({
+  tags,
+  loading,
+  setTags,
+  handleButtonClick,
+}) => (
   <div className="section customize-section">
     <Title level={5} style={{ marginBottom: "0.375rem" }}>
       ✨ Customize your tags
     </Title>
-    <Customization tags={tags} setTags={setTags} />
-    <Button type="primary" className="btn" onClick={handleGenerateTags}>
-      Save new tags
-    </Button>
+    <Customization
+      tags={tags}
+      loading={loading}
+      setTags={setTags}
+      handleButtonClick={handleButtonClick}
+    />
   </div>
 );
