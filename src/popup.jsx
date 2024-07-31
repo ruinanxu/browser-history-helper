@@ -98,6 +98,7 @@ function App() {
       const message = {
         action: "classify",
         text: page.title,
+        url: page.url,
       };
       console.log(`------------${index}-------------`);
       console.log("sending message", message);

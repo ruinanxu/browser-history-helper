@@ -27,7 +27,6 @@ export const candidateLabels = [
   "Philosophy and Ethics",
   "Photography",
   "Politics and Government",
-  "Relationships and Dating",
   "Religion and Spirituality",
   "Robotics",
   "Safety and Security",

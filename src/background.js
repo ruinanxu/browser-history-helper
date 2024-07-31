@@ -2,6 +2,7 @@
 
 import { pipeline, env } from "@xenova/transformers";
 import { candidateLabels, maxResults } from "./constants.js";
+import { getClassifyText, getDomainFromUrl } from "./utils.js";
 
 // Skip initial check for local models, since we are not loading any local models.
 env.allowLocalModels = false;
@@ -26,7 +27,7 @@ class PipelineSingleton {
 
 // Create generic classify function, which will be reused for the different types of events.
 const classify = async (text) => {
-  console.log("classifying", text);
+  console.log("---classifying---", text);
   // Retrieve custom labels from local storage
   let customLabels;
   try {
@@ -76,7 +77,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Run model prediction asynchronously
   (async function () {
     // Perform classification
-    let result = await classify(message.text);
+    let result = await classify(getClassifyText(message.text, message.url));
 
     // Send response back to UI
     sendResponse(result);
@@ -131,7 +132,9 @@ chrome.history.onVisited.addListener(async (historyItem) => {
   // Check if the history item has a title.
   if (historyItem.title) {
     try {
-      const response = await classify(historyItem.title);
+      const response = await classify(
+        getClassifyText(historyItem.title, historyItem.url)
+      );
       await storeHistoryItem(historyItem, response);
     } catch (error) {
       console.error(`Error processing history item ${historyItem.url}:`, error);
@@ -158,7 +161,9 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       });
       for (const item of historyItems) {
         if (item.title) {
-          const response = await classify(item.title);
+          const response = await classify(
+            getClassifyText(item.title, item.url)
+          );
           await storeHistoryItem(item, response);
         }
       }
