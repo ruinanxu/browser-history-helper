@@ -1,6 +1,14 @@
 # Browser History Helper - Use Auto-Generated Tags 🎈 to Help You Filter Your History
 
-Browser History Helper is an extension that helps users better retrieve webpages from their browser history using Machine Learning models. Specifically, the model generates tags for your history items, allowing you to filter results more effectively. We also support customizing tags, enabling users to define their own tag sets to better suit their needs. Currently, we use a distilled BERT uncased model from 🤗 Transformers.
+Browser History Helper is an extension that helps users better retrieve webpages from their browser history using Machine Learning models. Specifically, the model generates tags for your history items, allowing you to filter results more effectively. 
+<p align="center">
+  <img src="image/README/1722413125140.png" alt="Tag Generation" width="600">
+</p>
+
+We also support customizing tags, enabling users to define their own tag sets to better suit their needs. Currently, we use a distilled BERT uncased model from 🤗 Transformers.
+<p align="center">
+  <img src="image/README/1722413159832.png" alt="Custom Tags" width="600">
+</p>
 
 ## Getting Started
 
