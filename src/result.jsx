@@ -1,5 +1,5 @@
 import React from "react";
-import { Typography, Select, List, Avatar, Tag } from "antd";
+import { Typography, Select, List, Avatar, Tag, Tooltip } from "antd";
 
 const { Title } = Typography;
 
@@ -42,7 +42,11 @@ const HistoryItemList = React.memo(({ dataState, handleItemClick }) => (
               </a>
             }
             description={
-              item.tags?.map((tag) => <Tag key={tag}>{tag}</Tag>) || []
+              item.tags?.map((tag, index) => (
+                <Tooltip key={tag} title={item.scores[index]}>
+                  <Tag>{tag}</Tag>
+                </Tooltip>
+              )) || []
             }
           />
         </List.Item>

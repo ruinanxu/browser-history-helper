@@ -26,11 +26,11 @@ class PipelineSingleton {
 
 // Create generic classify function, which will be reused for the different types of events.
 const classify = async (text) => {
-  console.log('classifying', text);
+  console.log("classifying", text);
   // Retrieve custom labels from local storage
   let customLabels;
   try {
-    const result = await promisify(chrome.storage.local.get, ['customLabels']);
+    const result = await promisify(chrome.storage.local.get, ["customLabels"]);
     customLabels = result.customLabels;
   } catch (error) {
     console.error("Error retrieving custom labels:", error);
@@ -52,7 +52,17 @@ const classify = async (text) => {
   } catch (error) {
     console.error("Error calling model:", error);
   }
-  return result.labels.slice(0, 3);
+  console.log("result", result);
+
+  // Reassemble res to have labels as keys and scores as values
+  const res = result.labels.slice(0, 3).reduce((acc, label, index) => {
+    acc[label] = result.scores[index];
+    return acc;
+  }, {});
+
+  console.log("1-res", res);
+
+  return res;
 };
 
 ////////////////////// Message Events /////////////////////
@@ -92,7 +102,7 @@ const promisify = (chromeFunction, ...args) =>
   });
 
 // Asynchronously stores a history item in local storage if it doesn't already exist.
-const storeHistoryItem = async (historyItem, tags) => {
+const storeHistoryItem = async (historyItem, response) => {
   try {
     const storageKey = historyItem.url;
     const result = await promisify(chrome.storage.local.get, [storageKey]);
@@ -100,7 +110,10 @@ const storeHistoryItem = async (historyItem, tags) => {
       const storageValue = {
         title: historyItem.title,
         url: historyItem.url,
-        tags: tags,
+        tags: Object.keys(response),
+        scores: Object.values(response).map((score) =>
+          parseFloat(score.toFixed(4))
+        ),
         lastVisitTime: historyItem.lastVisitTime,
       };
       await promisify(chrome.storage.local.set, { [storageKey]: storageValue });
@@ -131,15 +144,17 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === "install") {
     try {
       // Set customLabels in chrome.storage.local
-      await promisify(chrome.storage.local.set, { 'customLabels': candidateLabels });
+      await promisify(chrome.storage.local.set, {
+        customLabels: candidateLabels,
+      });
 
       // Calculate the timestamp for one month ago
-      const oneMonthAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+      const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
 
       const historyItems = await promisify(chrome.history.search, {
         text: "",
         maxResults: maxResults,
-        startTime: oneMonthAgo
+        startTime: oneMonthAgo,
       });
       for (const item of historyItems) {
         if (item.title) {

@@ -106,13 +106,16 @@ function App() {
         chrome.runtime.sendMessage(message, resolve);
       });
 
-      console.log("received user data", response);
+      console.log("2-received user data", response);
 
       const storageKey = page.url;
       const storageValue = {
         title: page.title,
         url: page.url,
-        tags: response,
+        tags: Object.keys(response),
+        scores: Object.values(response).map((score) =>
+          parseFloat(score.toFixed(4))
+        ),
         lastVisitTime: page.lastVisitTime,
       };
 
