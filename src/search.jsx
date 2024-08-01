@@ -21,7 +21,7 @@ const descriptionStyle = {
 
 const SearchBox = React.memo(({ handleOnSearch }) => (
   <Search
-    placeholder="Perform similarity search"
+    placeholder="Perform semantic similarity search"
     onSearch={(value) => handleOnSearch(value)}
     enterButton
   />

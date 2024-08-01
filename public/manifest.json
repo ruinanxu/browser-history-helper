@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Browser History Helper",
-  "description": "Use similarity search🔍 or auto-generated tags🎈 to help you filter your history",
+  "description": "Use semantic similarity search🔍 or auto-generated tags🎈 to help you filter your history",
   "version": "0.0.2",
   "permissions": [
     "activeTab",

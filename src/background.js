@@ -2,7 +2,12 @@
 
 import { pipeline, env } from "@xenova/transformers";
 import { candidateLabels, maxResults } from "./constants.js";
-import { cosineSimilarity, getClassifyText, promisify, storeHistoryItem } from "./utils.js";
+import {
+  cosineSimilarity,
+  getClassifyText,
+  promisify,
+  storeHistoryItem,
+} from "./utils.js";
 
 // Skip initial check for local models, since we are not loading any local models.
 env.allowLocalModels = false;
@@ -100,7 +105,7 @@ const encodeText = async (text) => {
 const similaritySearch = async (query) => {
   const queryEmbedding = await encodeText(query);
 
-  const result = await promisify(chrome.storage.local.get, ['data']);
+  const result = await promisify(chrome.storage.local.get, ["data"]);
   const data = result.data || {};
   const historyEmbeddings = Object.values(data).map((item) => item.embedding);
 
@@ -114,11 +119,11 @@ const similaritySearch = async (query) => {
       score: scores[idx],
       title: item.title,
     }))
-    .filter(item => item.score > 0.2)
+    .filter((item) => item.score > 0.2)
     .sort((a, b) => b.score - a.score);
 
   return searchResult;
-}
+};
 
 ////////////////////// Message Events /////////////////////
 //
@@ -163,17 +168,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Listener for when a user visits a new URL.
 chrome.history.onVisited.addListener(async (historyItem) => {
-  // Check if the history item has a title.
-  if (historyItem.title) {
-    try {
-      const classifyRessult = await classify(
-        getClassifyText(historyItem.title, historyItem.url)
-      );
-      const embeddingResult = await encodeText(item.title);
-      await storeHistoryItem(historyItem, classifyRessult, embeddingResult);
-    } catch (error) {
-      console.error(`Error processing history item ${historyItem.url}:`, error);
-    }
+  try {
+    const classifyRessult = await classify(
+      getClassifyText(historyItem.title, historyItem.url)
+    );
+    const embeddingResult = await encodeText(historyItem.title);
+    await storeHistoryItem(historyItem, classifyRessult, embeddingResult);
+  } catch (error) {
+    console.error(`Error processing history item ${historyItem.url}:`, error);
   }
 });
 

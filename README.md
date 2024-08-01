@@ -1,6 +1,6 @@
 # Browser History Helper - Use AI Techniques to Manage Your History
 
-Browser History Helper is an extension that helps users retrieve webpages from their browser history using Machine Learning models. Specifically, the model can perform similarity searches given a query.
+Browser History Helper is an extension that helps users retrieve webpages from their browser history using Machine Learning models. Specifically, the model can perform semantic similarity searches given a query.
 
 <p align="center">
   <img src="image/README/1722504467136.png" alt="Similarity search" width="600">
@@ -15,6 +15,11 @@ We also support customizing tags, enabling users to define their own tag sets to
 <p align="center">
   <img src="image/README/1722413159832.png" alt="Custom Tags" width="600">
 </p>
+
+## TODO
+1. **Update search result for new visit**
+2. **Show history when input box has no value**
+3. **Change style of customization section**
 
 ## Getting Started
 
