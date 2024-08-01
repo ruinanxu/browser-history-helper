@@ -2,7 +2,7 @@
 
 import { pipeline, env } from "@xenova/transformers";
 import { candidateLabels, maxResults } from "./constants.js";
-import { getClassifyText, getDomainFromUrl } from "./utils.js";
+import { cosineSimilarity, getClassifyText, promisify, storeHistoryItem } from "./utils.js";
 
 // Skip initial check for local models, since we are not loading any local models.
 env.allowLocalModels = false;
@@ -11,7 +11,12 @@ env.allowLocalModels = false;
 // See https://github.com/microsoft/onnxruntime/issues/14445 for more information.
 env.backends.onnx.wasm.numThreads = 1;
 
-class PipelineSingleton {
+////////////////////// Models /////////////////////
+//
+// 1. Classify text or text pairs using zero-shot classification.
+// 2. Extract embeddings from text.
+
+class ClassifyPipelineSingleton {
   static task = "zero-shot-classification";
   static model = "Xenova/distilbert-base-uncased-mnli";
   static instance = null;
@@ -40,7 +45,7 @@ const classify = async (text) => {
   const labelsToUse = customLabels || candidateLabels;
 
   // Get the pipeline instance. This will load and build the model when run for the first time.
-  let model = await PipelineSingleton.getInstance((data) => {
+  let model = await ClassifyPipelineSingleton.getInstance((data) => {
     // You can track the progress of the pipeline creation here.
     // e.g., you can send `data` back to the UI to indicate a progress bar
     // console.log('progress', data)
@@ -66,6 +71,55 @@ const classify = async (text) => {
   return res;
 };
 
+class SimiSearchPipelineSingleton {
+  static task = "feature-extraction";
+  static model = "Xenova/all-MiniLM-L6-v2";
+  static instance = null;
+
+  static async getInstance(progress_callback = null) {
+    if (this.instance === null) {
+      this.instance = pipeline(this.task, this.model, { progress_callback });
+    }
+
+    return this.instance;
+  }
+}
+
+const encodeText = async (text) => {
+  // Get the pipeline instance. This will load and build the model when run for the first time.
+  let model = await SimiSearchPipelineSingleton.getInstance((data) => {
+    // You can track the progress of the pipeline creation here.
+    // e.g., you can send `data` back to the UI to indicate a progress bar
+    // console.log('progress', data)
+  });
+
+  const embeddings = await model(text, { pooling: "mean", normalize: true });
+  return embeddings[0].tolist();
+};
+
+const similaritySearch = async (query) => {
+  const queryEmbedding = await encodeText(query);
+
+  const result = await promisify(chrome.storage.local.get, ['data']);
+  const data = result.data || {};
+  const historyEmbeddings = Object.values(data).map((item) => item.embedding);
+
+  const scores = historyEmbeddings.map((embedding) => {
+    return cosineSimilarity(queryEmbedding, embedding);
+  });
+
+  const searchResult = Object.entries(data)
+    .map(([url, item], idx) => ({
+      url,
+      score: scores[idx],
+      title: item.title,
+    }))
+    .filter(item => item.score > 0.2)
+    .sort((a, b) => b.score - a.score);
+
+  return searchResult;
+}
+
 ////////////////////// Message Events /////////////////////
 //
 // Listen for messages from the UI, process it, and send the result back.
@@ -77,10 +131,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Run model prediction asynchronously
   (async function () {
     // Perform classification
-    let result = await classify(getClassifyText(message.text, message.url));
+    let classifyRessult = await classify(
+      getClassifyText(message.text, message.url)
+    );
 
     // Send response back to UI
-    sendResponse(result);
+    sendResponse(classifyRessult);
   })();
 
   // return true to indicate we will send a response asynchronously
@@ -88,54 +144,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true;
 });
 
-// Utility function to convert Chrome API callbacks to Promises for easier async handling.
-const promisify = (chromeFunction, ...args) =>
-  new Promise((resolve, reject) => {
-    // Bind `chromeFunction` to ensure it has the correct `this` context
-    const boundFunction = chromeFunction.bind(chrome.storage.local);
-    boundFunction(...args, (result) => {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError);
-      } else {
-        resolve(result);
-      }
-    });
-  });
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action !== "simi-search") return; // Ignore messages that are not meant for simi-search.
 
-// Asynchronously stores a history item in local storage if it doesn't already exist.
-const storeHistoryItem = async (historyItem, response) => {
-  try {
-    const storageKey = historyItem.url;
-    const result = await promisify(chrome.storage.local.get, [storageKey]);
-    if (!result[storageKey]) {
-      const storageValue = {
-        title: historyItem.title,
-        url: historyItem.url,
-        tags: Object.keys(response),
-        scores: Object.values(response).map((score) =>
-          parseFloat(score.toFixed(4))
-        ),
-        lastVisitTime: historyItem.lastVisitTime,
-      };
-      await promisify(chrome.storage.local.set, { [storageKey]: storageValue });
-      console.log(`Data for ${storageKey} stored successfully.`);
-    } else {
-      console.log(`Storage key ${storageKey} already exists. Skipping.`);
-    }
-  } catch (error) {
-    console.error(`Error storing data for ${historyItem.url}:`, error);
-  }
-};
+  // Run model prediction asynchronously
+  (async function () {
+    // Perform similarity search
+    let searchResult = await similaritySearch(message.query);
+
+    // Send response back to UI
+    sendResponse(searchResult);
+  })();
+
+  // return true to indicate we will send a response asynchronously
+  // see https://stackoverflow.com/a/46628145 for more information
+  return true;
+});
 
 // Listener for when a user visits a new URL.
 chrome.history.onVisited.addListener(async (historyItem) => {
   // Check if the history item has a title.
   if (historyItem.title) {
     try {
-      const response = await classify(
+      const classifyRessult = await classify(
         getClassifyText(historyItem.title, historyItem.url)
       );
-      await storeHistoryItem(historyItem, response);
+      const embeddingResult = await encodeText(item.title);
+      await storeHistoryItem(historyItem, classifyRessult, embeddingResult);
     } catch (error) {
       console.error(`Error processing history item ${historyItem.url}:`, error);
     }
@@ -161,10 +196,11 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       });
       for (const item of historyItems) {
         if (item.title) {
-          const response = await classify(
+          const classifyRessult = await classify(
             getClassifyText(item.title, item.url)
           );
-          await storeHistoryItem(item, response);
+          const embeddingResult = await encodeText(item.title);
+          await storeHistoryItem(item, classifyRessult, embeddingResult);
         }
       }
     } catch (error) {

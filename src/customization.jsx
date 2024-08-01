@@ -115,7 +115,7 @@ export const CustomizationSection = ({
 }) => (
   <div className="section customize-section">
     <Title level={5} style={{ marginBottom: "0.375rem" }}>
-      ✨ Customize your tags
+      🌈 Customize your tags
     </Title>
     <Customization
       tags={tags}

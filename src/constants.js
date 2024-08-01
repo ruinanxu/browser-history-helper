@@ -43,4 +43,4 @@ export const colors = [
   'lime', 'green', 'cyan', 'blue', 'geekblue', 'purple'
 ];
 
-export const maxResults = 50;
+export const maxResults = 20;

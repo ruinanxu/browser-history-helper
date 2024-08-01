@@ -3,17 +3,28 @@ import { createRoot } from "react-dom/client";
 import "./Popup.css";
 import { Typography, ConfigProvider, Menu as AntMenu } from "antd";
 import { candidateLabels, maxResults } from "./constants.js";
-import { HistoryOutlined, SettingOutlined } from "@ant-design/icons";
+import {
+  HistoryOutlined,
+  FilterOutlined,
+  SettingOutlined,
+} from "@ant-design/icons";
 import { CustomizationSection } from "./customization.jsx";
 import { ResultSection } from "./result.jsx";
+import { SearchSection } from "./search.jsx";
+import { storeHistoryItem } from "./utils.js";
 
 const { Title } = Typography;
 
-const items = [
+const sections = [
   {
-    label: "Results",
-    key: "results",
+    label: "Search",
+    key: "search",
     icon: <HistoryOutlined />,
+  },
+  {
+    label: "Filter",
+    key: "filter",
+    icon: <FilterOutlined />,
   },
   {
     label: "Customization",
@@ -36,7 +47,7 @@ const Menu = ({ current, setCurrent }) => {
       onClick={onClick}
       selectedKeys={[current]}
       mode="horizontal"
-      items={items}
+      items={sections}
     />
   );
 };
@@ -45,8 +56,9 @@ function App() {
   const [dataState, setDataState] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
   const [tags, setTags] = useState([]);
-  const [currentTab, setCurrentTab] = useState("results");
+  const [currentTab, setCurrentTab] = useState("search");
   const [loading, setLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
 
   useEffect(() => {
     const fetchCustomLabels = async () => {
@@ -63,6 +75,7 @@ function App() {
     const loadData = async () => {
       const loadedData = await handleLoadData();
       setDataState(loadedData);
+      setSearchResults(loadedData);
     };
 
     loadData();
@@ -109,23 +122,7 @@ function App() {
 
       console.log("2-received user data", response);
 
-      const storageKey = page.url;
-      const storageValue = {
-        title: page.title,
-        url: page.url,
-        tags: Object.keys(response),
-        scores: Object.values(response).map((score) =>
-          parseFloat(score.toFixed(4))
-        ),
-        lastVisitTime: page.lastVisitTime,
-      };
-
-      await new Promise((resolve) => {
-        chrome.storage.local.set({ [storageKey]: storageValue }, () => {
-          console.log(`Data for ${storageKey} stored successfully.`);
-          resolve();
-        });
-      });
+      await storeHistoryItem(page, response, null);
     }
 
     setLoading(false);
@@ -137,17 +134,16 @@ function App() {
   const handleLoadData = useCallback(() => {
     console.log("loading data");
     return new Promise((resolve) => {
-      chrome.storage.local.get(null, (items) => {
-        const filteredData = Object.entries(items)
-          .filter(([key]) => key !== "customLabels")
-          .map(([_, value]) => {
-            try {
-              return JSON.parse(value);
-            } catch (e) {
-              return value;
-            }
-          });
-        resolve(filteredData);
+      chrome.storage.local.get("data", (result) => {
+        const items = result.data || {};
+        const parsedData = Object.entries(items).map(([_, value]) => {
+          try {
+            return JSON.parse(value);
+          } catch (e) {
+            return value;
+          }
+        });
+        resolve(parsedData);
       });
     });
   }, []);
@@ -159,6 +155,19 @@ function App() {
 
   const handleFilterChange = useCallback((newSelectedTags) => {
     setSelectedTags(newSelectedTags);
+  }, []);
+
+  const handleOnSearch = useCallback(async (value) => {
+    const message = {
+      action: "simi-search",
+      query: value,
+    };
+    const response = await new Promise((resolve) => {
+      chrome.runtime.sendMessage(message, resolve);
+    });
+
+    console.log("received simi-search response", response);
+    setSearchResults(response);
   }, []);
 
   return (
@@ -178,7 +187,14 @@ function App() {
           Browser History Helper
         </Title>
         <Menu current={currentTab} setCurrent={setCurrentTab} />
-        {currentTab === "results" ? (
+        {currentTab === "search" && (
+          <SearchSection
+            searchResults={searchResults}
+            handleItemClick={handleItemClick}
+            handleOnSearch={handleOnSearch}
+          />
+        )}
+        {currentTab === "filter" && (
           <ResultSection
             selectedTags={selectedTags}
             handleFilterChange={handleFilterChange}
@@ -186,7 +202,8 @@ function App() {
             dataState={dataState}
             handleItemClick={handleItemClick}
           />
-        ) : (
+        )}
+        {currentTab === "customization" && (
           <CustomizationSection
             tags={tags}
             loading={loading}

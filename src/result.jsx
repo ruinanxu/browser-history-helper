@@ -69,7 +69,7 @@ export const ResultSection = ({
   return (
     <div className="section result-section">
       <Title level={5} style={{ marginBottom: "0.375rem" }}>
-        🪄 See your history
+        🪄 Filter your history
       </Title>
       <Filter
         selectedTags={selectedTags}
