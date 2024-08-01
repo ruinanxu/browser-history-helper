@@ -22,7 +22,7 @@ const Filter = React.memo(({ selectedTags, handleFilterChange, options }) => (
   />
 ));
 
-const HistoryItemList = React.memo(({ dataState, handleItemClick }) => (
+const SearchResultList = React.memo(({ dataState, handleItemClick }) => (
   <div className="scrollable-list-container scrollable-container">
     <List
       itemLayout="horizontal"
@@ -55,7 +55,7 @@ const HistoryItemList = React.memo(({ dataState, handleItemClick }) => (
   </div>
 ));
 
-export const ResultSection = ({
+export const FilterSection = ({
   selectedTags,
   handleFilterChange,
   tags,
@@ -76,7 +76,7 @@ export const ResultSection = ({
         handleFilterChange={handleFilterChange}
         options={tags.map((label) => ({ value: label, label }))}
       />
-      <HistoryItemList
+      <SearchResultList
         dataState={filteredData}
         handleItemClick={handleItemClick}
       />

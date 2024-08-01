@@ -1,5 +1,6 @@
 import React from "react";
 import { Typography, List, Avatar, Input } from "antd";
+import { getDomainFromUrl } from "./utils";
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -12,6 +13,12 @@ const titleStyle = {
   textOverflow: "ellipsis",
 };
 
+const descriptionStyle = {
+  color: 'gray',
+  fontSize: '14px',
+  fontFamily: 'segoe UI',
+};
+
 const SearchBox = React.memo(({ handleOnSearch }) => (
   <Search
     placeholder="Perform similarity search"
@@ -20,7 +27,7 @@ const SearchBox = React.memo(({ handleOnSearch }) => (
   />
 ));
 
-const HistoryItemList = React.memo(({ searchResults, handleItemClick }) => (
+const FilteredHistoryList = React.memo(({ searchResults, handleItemClick }) => (
   <div className="scrollable-list-container scrollable-container">
     <List
       itemLayout="horizontal"
@@ -38,6 +45,11 @@ const HistoryItemList = React.memo(({ searchResults, handleItemClick }) => (
               <a href="" style={titleStyle}>
                 {item.title}
               </a>
+            }
+            description={
+              <span style={descriptionStyle}>
+                {getDomainFromUrl(item.url)}
+              </span>
             }
           />
         </List.Item>
@@ -57,7 +69,7 @@ export const SearchSection = ({
         ✨ Search your history
       </Title>
       <SearchBox handleOnSearch={handleOnSearch} />
-      <HistoryItemList
+      <FilteredHistoryList
         searchResults={searchResults}
         handleItemClick={handleItemClick}
       />

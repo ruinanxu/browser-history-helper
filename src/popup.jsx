@@ -9,7 +9,7 @@ import {
   SettingOutlined,
 } from "@ant-design/icons";
 import { CustomizationSection } from "./customization.jsx";
-import { ResultSection } from "./result.jsx";
+import { FilterSection } from "./filter.jsx";
 import { SearchSection } from "./search.jsx";
 import { storeHistoryItem } from "./utils.js";
 
@@ -195,7 +195,7 @@ function App() {
           />
         )}
         {currentTab === "filter" && (
-          <ResultSection
+          <FilterSection
             selectedTags={selectedTags}
             handleFilterChange={handleFilterChange}
             tags={tags}
