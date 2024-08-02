@@ -17,9 +17,7 @@ We also support customizing tags, enabling users to define their own tag sets to
 </p>
 
 ## TODO
-1. **Update search result for new visit**
-2. **Show history when input box has no value**
-3. **Change style of customization section**
+1. **Re-design customization section**
 
 ## Getting Started
 

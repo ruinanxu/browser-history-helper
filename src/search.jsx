@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Typography, List, Avatar, Input } from "antd";
 import { getDomainFromUrl } from "./utils";
 
@@ -14,24 +14,25 @@ const titleStyle = {
 };
 
 const descriptionStyle = {
-  color: 'gray',
-  fontSize: '14px',
-  fontFamily: 'segoe UI',
+  color: "gray",
+  fontSize: "14px",
+  fontFamily: "segoe UI",
 };
 
-const SearchBox = React.memo(({ handleOnSearch }) => (
+const SearchBox = React.memo(({ handleOnSearch, handleSearchBoxOnChange }) => (
   <Search
     placeholder="Perform semantic similarity search"
     onSearch={(value) => handleOnSearch(value)}
+    onChange={handleSearchBoxOnChange}
     enterButton
   />
 ));
 
-const FilteredHistoryList = React.memo(({ searchResults, handleItemClick }) => (
+const SearchResultList = React.memo(({ dataSource, handleItemClick }) => (
   <div className="scrollable-list-container scrollable-container">
     <List
       itemLayout="horizontal"
-      dataSource={searchResults}
+      dataSource={dataSource}
       renderItem={(item) => (
         <List.Item onClick={() => handleItemClick(item)}>
           <List.Item.Meta
@@ -47,9 +48,7 @@ const FilteredHistoryList = React.memo(({ searchResults, handleItemClick }) => (
               </a>
             }
             description={
-              <span style={descriptionStyle}>
-                {getDomainFromUrl(item.url)}
-              </span>
+              <span style={descriptionStyle}>{getDomainFromUrl(item.url)}</span>
             }
           />
         </List.Item>
@@ -60,17 +59,41 @@ const FilteredHistoryList = React.memo(({ searchResults, handleItemClick }) => (
 
 export const SearchSection = ({
   searchResults,
+  dataState,
   handleItemClick,
   handleOnSearch,
 }) => {
+  const [dataSource, setDataSource] = useState([]);
+
+  // Set initial data source
+  // Set data source to initial data state when data state changes
+  useEffect(() => {
+    setDataSource(dataState);
+  }, [dataState]);
+
+  // Set data source to search results when searching
+  useEffect(() => {
+    setDataSource(searchResults);
+  }, [searchResults]);
+
+  // Set data source to initial data state when search box is empty
+  const handleSearchBoxOnChange = (e) => {
+    if (e.target.value === "") {
+      setDataSource(dataState);
+    }
+  };
+
   return (
     <div className="section result-section">
       <Title level={5} style={{ marginBottom: "0.375rem" }}>
         ✨ Search your history
       </Title>
-      <SearchBox handleOnSearch={handleOnSearch} />
-      <FilteredHistoryList
-        searchResults={searchResults}
+      <SearchBox
+        handleOnSearch={handleOnSearch}
+        handleSearchBoxOnChange={handleSearchBoxOnChange}
+      />
+      <SearchResultList
+        dataSource={dataSource}
         handleItemClick={handleItemClick}
       />
     </div>

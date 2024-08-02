@@ -78,7 +78,18 @@ function App() {
       setSearchResults(loadedData);
     };
 
+    const handlePopState = () => {
+      loadData();
+    };
+
     loadData();
+
+    // Listen for changes in the URL and will reload the data when the History changes
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
   }, []);
 
   useEffect(() => {
@@ -190,6 +201,7 @@ function App() {
         {currentTab === "search" && (
           <SearchSection
             searchResults={searchResults}
+            dataState={dataState}
             handleItemClick={handleItemClick}
             handleOnSearch={handleOnSearch}
           />

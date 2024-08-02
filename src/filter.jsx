@@ -22,7 +22,7 @@ const Filter = React.memo(({ selectedTags, handleFilterChange, options }) => (
   />
 ));
 
-const SearchResultList = React.memo(({ dataState, handleItemClick }) => (
+const FilteredHistoryList = React.memo(({ dataState, handleItemClick }) => (
   <div className="scrollable-list-container scrollable-container">
     <List
       itemLayout="horizontal"
@@ -62,6 +62,7 @@ export const FilterSection = ({
   dataState,
   handleItemClick,
 }) => {
+  // Only show items that have all selected tags
   const filteredData = dataState
     .filter((item) => selectedTags.every((tag) => item.tags.includes(tag)))
     .sort((a, b) => b.lastVisitTime - a.lastVisitTime);
@@ -76,7 +77,7 @@ export const FilterSection = ({
         handleFilterChange={handleFilterChange}
         options={tags.map((label) => ({ value: label, label }))}
       />
-      <SearchResultList
+      <FilteredHistoryList
         dataState={filteredData}
         handleItemClick={handleItemClick}
       />
