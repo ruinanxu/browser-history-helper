@@ -18,6 +18,7 @@ We also support customizing tags, enabling users to define their own tag sets to
 
 ## TODO
 1. **Re-design customization section**
+2. **Bug-fix: customized tags section is empty**
 
 ## Getting Started
 

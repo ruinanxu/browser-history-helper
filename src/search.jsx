@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Typography, List, Avatar, Input } from "antd";
+import { Typography, List, Avatar, Input, Spin } from "antd";
+import { LoadingOutlined } from "@ant-design/icons";
 import { getDomainFromUrl } from "./utils";
 
 const { Title } = Typography;
@@ -87,6 +88,7 @@ export const SearchSection = ({
     <div className="section result-section">
       <Title level={5} style={{ marginBottom: "0.375rem" }}>
         ✨ Search your history
+        {/* <Spin className="spin" indicator={<LoadingOutlined spin />} /> */}
       </Title>
       <SearchBox
         handleOnSearch={handleOnSearch}

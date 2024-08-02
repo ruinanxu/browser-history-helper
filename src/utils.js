@@ -42,6 +42,43 @@ export const storeHistoryItem = async (historyItem, classifyRessult, embeddingRe
   }
 };
 
+export const updateHistoryItem = async (historyItem, classifyRessult, embeddingResult) => {
+  try {
+    const storageKey = historyItem.url;
+    const result = await promisify(chrome.storage.local.get, ['data']);
+    const data = result.data || {};
+
+    if (data[storageKey]) {
+      const storageValue = {
+        title: historyItem.title,
+        url: historyItem.url,
+        tags: Object.keys(classifyRessult),
+        scores: Object.values(classifyRessult).map((score) =>
+          parseFloat(score.toFixed(4))
+        ),
+        lastVisitTime: historyItem.lastVisitTime,
+        embedding: embeddingResult? embeddingResult : data[storageKey].embedding,
+      };
+      data[storageKey] = storageValue;
+      await promisify(chrome.storage.local.set, { data });
+      console.log(`Data for ${storageKey} updated successfully.`);
+    } else {
+      console.log(`Storage key ${storageKey} does not exist. Skipping.`);
+    }
+  } catch (error) {
+    console.error(`Error updating data for ${historyItem.url}:`, error);
+  }
+};
+
+export const updateNewTags = async (tags) => {
+  try {
+    await promisify(chrome.storage.local.set, { customLabels: tags });
+    console.log("customLabels updated successfully.");
+  } catch (error) {
+    console.error("Error updating customLabels:", error);
+  }
+};
+
 // Utility function to convert Chrome API callbacks to Promises for easier async handling.
 export const promisify = (chromeFunction, ...args) =>
   new Promise((resolve, reject) => {

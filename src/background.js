@@ -49,6 +49,13 @@ const classify = async (text) => {
 
   const labelsToUse = customLabels || candidateLabels;
 
+  if (labelsToUse.length === 0) {
+    console.error(
+      "No labels found. Please add custom labels in the options page."
+    );
+    return;
+  }
+
   // Get the pipeline instance. This will load and build the model when run for the first time.
   let model = await ClassifyPipelineSingleton.getInstance((data) => {
     // You can track the progress of the pipeline creation here.
@@ -129,7 +136,6 @@ const similaritySearch = async (query) => {
 //
 // Listen for messages from the UI, process it, and send the result back.
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log("sender", sender);
   console.log("message", message);
   if (message.action !== "classify") return; // Ignore messages that are not meant for classification.
 

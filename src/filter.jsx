@@ -1,5 +1,6 @@
 import React from "react";
-import { Typography, Select, List, Avatar, Tag, Tooltip } from "antd";
+import { Typography, Select, List, Avatar, Tag, Tooltip, Spin } from "antd";
+import { LoadingOutlined } from "@ant-design/icons";
 
 const { Title } = Typography;
 
@@ -56,6 +57,7 @@ const FilteredHistoryList = React.memo(({ dataState, handleItemClick }) => (
 ));
 
 export const FilterSection = ({
+  loading,
   selectedTags,
   handleFilterChange,
   tags,
@@ -71,6 +73,9 @@ export const FilterSection = ({
     <div className="section result-section">
       <Title level={5} style={{ marginBottom: "0.375rem" }}>
         🪄 Filter your history
+        {loading && (
+          <Spin className="spin" indicator={<LoadingOutlined spin />} />
+        )}
       </Title>
       <Filter
         selectedTags={selectedTags}

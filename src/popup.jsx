@@ -11,7 +11,7 @@ import {
 import { CustomizationSection } from "./customization.jsx";
 import { FilterSection } from "./filter.jsx";
 import { SearchSection } from "./search.jsx";
-import { storeHistoryItem } from "./utils.js";
+import { updateHistoryItem } from "./utils.js";
 
 const { Title } = Typography;
 
@@ -92,24 +92,16 @@ function App() {
     };
   }, []);
 
-  useEffect(() => {
-    if (loading) {
-      handleGenerateTags();
-    }
-  }, [loading]);
-
-  const handleButtonClick = useCallback(() => {
+////////////////////// Generate new tags button /////////////////////
+//
+// 1. Generate new tags.
+// 2. Load new data.
+  const handleButtonClick = useCallback(async () => {
     setLoading(true);
+    await handleGenerateTags();
   }, []);
 
-  const handleSaveNewTags = useCallback(() => {
-    chrome.storage.local.set({ customLabels: tags }, () => {
-      console.log("customLabels updated successfully.");
-    });
-  }, [tags]);
-
   const handleGenerateTags = useCallback(async () => {
-    handleSaveNewTags();
     const historyItems = await new Promise((resolve) => {
       const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
       chrome.history.search(
@@ -127,20 +119,19 @@ function App() {
       console.log(`------------${index}-------------`);
       console.log("sending message", message);
 
-      const response = await new Promise((resolve) => {
+      const classifyRessult = await new Promise((resolve) => {
         chrome.runtime.sendMessage(message, resolve);
       });
 
-      console.log("2-received user data", response);
-
-      await storeHistoryItem(page, response, null);
+      console.log("2-received classifyRessult", classifyRessult);
+      await updateHistoryItem(page, classifyRessult, null);
     }
 
     setLoading(false);
     // Refresh data
     const loadedData = await handleLoadData();
     setDataState(loadedData);
-  }, [handleSaveNewTags]);
+  }, []);
 
   const handleLoadData = useCallback(() => {
     console.log("loading data");
@@ -159,6 +150,9 @@ function App() {
     });
   }, []);
 
+  /**
+   * Handle History item click
+   */
   const handleItemClick = useCallback((item) => {
     console.log("item", item);
     chrome.tabs.create({ url: item.url });
@@ -208,6 +202,7 @@ function App() {
         )}
         {currentTab === "filter" && (
           <FilterSection
+            loading={loading}
             selectedTags={selectedTags}
             handleFilterChange={handleFilterChange}
             tags={tags}
@@ -218,10 +213,8 @@ function App() {
         {currentTab === "customization" && (
           <CustomizationSection
             tags={tags}
-            loading={loading}
             setTags={setTags}
             handleButtonClick={handleButtonClick}
-            handleSaveNewTags={handleSaveNewTags}
           />
         )}
       </div>
