@@ -69,7 +69,7 @@ export const SearchSection = ({
   // Set initial data source
   // Set data source to initial data state when data state changes
   useEffect(() => {
-    setDataSource(dataState);
+    setDataSource(dataState.sort((a, b) => b.lastVisitTime - a.lastVisitTime));
   }, [dataState]);
 
   // Set data source to search results when searching

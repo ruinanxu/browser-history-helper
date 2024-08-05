@@ -89,3 +89,9 @@ body {
   justify-content: space-between;
   align-items: center;
 }
+
+.statistics-section {
+  display: flex;
+  justify-content: space-evenly;
+  margin-top: 10px;
+}

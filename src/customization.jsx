@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Input, Tag, Typography, Button } from "antd";
+import { Input, Tag, Typography, Button, Statistic } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { TweenOneGroup } from "rc-tween-one";
 import { theme } from "antd";
@@ -121,5 +121,15 @@ export const CustomizationSection = ({ tags, setTags, handleButtonClick }) => (
       setTags={setTags}
       handleButtonClick={handleButtonClick}
     />
+    <div className="statistics-section">
+      <Statistic
+        title="Max number of records"
+        value={50}
+      />
+      <Statistic
+        title="History date back to"
+        value="30 days"
+      />
+    </div>
   </div>
 );
