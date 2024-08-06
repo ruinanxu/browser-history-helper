@@ -35,7 +35,7 @@ export const storeHistoryItem = async (historyItem, classifyRessult, embeddingRe
       await promisify(chrome.storage.local.set, { data });
       console.log(`Data for ${storageKey} stored successfully.`);
     } else {
-      console.log(`Storage key ${storageKey} already exists. Skipping.`);
+      await updateHistoryItem(historyItem, classifyRessult, embeddingResult);
     }
   } catch (error) {
     console.error(`Error storing data for ${historyItem.url}:`, error);

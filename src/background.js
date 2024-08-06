@@ -174,6 +174,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Listener for when a user visits a new URL.
 chrome.history.onVisited.addListener(async (historyItem) => {
+  if (!historyItem.title) return;
   try {
     const classifyRessult = await classify(
       getClassifyText(historyItem.title, historyItem.url)
