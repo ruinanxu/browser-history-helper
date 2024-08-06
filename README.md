@@ -13,12 +13,11 @@ Additionally, the model generates tags for your history items, allowing you to f
 
 We also support customizing tags, enabling users to define their own tag sets to better suit their needs. Currently, we use a distilled BERT uncased model from 🤗 Transformers.
 <p align="center">
-  <img src="image/README/1722413159832.png" alt="Custom Tags" width="600">
+  <img src="image/README/1722933017344.png" alt="Custom Tags" width="600">
 </p>
 
 ## TODO
-1. **Re-design customization section**
-2. **Bug-fix: customized tags section is empty**
+1. **Re-design customization section: Enable users to customize `max number of records` and `History date back to`**
 
 ## Getting Started
 
