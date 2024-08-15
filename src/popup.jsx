@@ -65,7 +65,7 @@ function App() {
       const result = await new Promise((resolve) => {
         chrome.storage.local.get(["customLabels"], resolve);
       });
-      setTags(result.customLabels || candidateLabels);
+      setTags(result.customLabels || []);
     };
 
     fetchCustomLabels();
@@ -92,10 +92,10 @@ function App() {
     };
   }, []);
 
-////////////////////// Generate new tags button /////////////////////
-//
-// 1. Generate new tags.
-// 2. Load new data.
+  ////////////////////// Generate new tags button /////////////////////
+  //
+  // 1. Generate new tags.
+  // 2. Load new data.
   const handleButtonClick = useCallback(async () => {
     setLoading(true);
     await handleGenerateTags();

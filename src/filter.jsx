@@ -42,13 +42,7 @@ const FilteredHistoryList = React.memo(({ dataState, handleItemClick }) => (
                 {item.title}
               </a>
             }
-            description={
-              item.tags?.map((tag, index) => (
-                <Tooltip key={tag} title={item.scores[index]}>
-                  <Tag>{tag}</Tag>
-                </Tooltip>
-              )) || []
-            }
+            description={item.tags?.map((tag) => <Tag>{tag}</Tag>) || []}
           />
         </List.Item>
       )}

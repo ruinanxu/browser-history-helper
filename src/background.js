@@ -7,6 +7,7 @@ import {
   getClassifyText,
   promisify,
   storeHistoryItem,
+  updateNewTags,
 } from "./utils.js";
 
 // Skip initial check for local models, since we are not loading any local models.
@@ -38,49 +39,57 @@ class ClassifyPipelineSingleton {
 // Create generic classify function, which will be reused for the different types of events.
 const classify = async (text) => {
   console.log("---classifying---", text);
-  // Retrieve custom labels from local storage
-  let customLabels;
+
+  const url =
+    "https://edge.microsoft.com/taggrouptitlegeneration/api/aipu/puv1"; // Replace with the actual URL
+  const body = {
+    Query: text,
+  };
+
   try {
-    const result = await promisify(chrome.storage.local.get, ["customLabels"]);
-    customLabels = result.customLabels;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log("DeepPU result", result);
+    const tier1 = result[0]["tier1_result"];
+    const tier2 = result[1]["tier2_result"];
+    const tier1_and_tier2 = tier1.concat(tier2);
+
+    let { customLabels: labels } = await promisify(chrome.storage.local.get, [
+      "customLabels",
+    ]);
+    labels = labels || [];
+
+    tier1_and_tier2.forEach((item) => {
+      if (!labels.includes(item)) {
+        labels.push(item);
+      }
+    });
+
+    updateNewTags(labels);
+
+    const res = tier1_and_tier2.reduce((acc, label) => {
+      acc[label] = 0.0;
+      return acc;
+    }, {});
+
+    console.log("1-res", res);
+
+    return res;
   } catch (error) {
-    console.error("Error retrieving custom labels:", error);
+    console.error("Error occurred while sending POST request:", error);
+    return null;
   }
-
-  const labelsToUse = customLabels || candidateLabels;
-
-  if (labelsToUse.length === 0) {
-    console.error(
-      "No labels found. Please add custom labels in the options page."
-    );
-    return;
-  }
-
-  // Get the pipeline instance. This will load and build the model when run for the first time.
-  let model = await ClassifyPipelineSingleton.getInstance((data) => {
-    // You can track the progress of the pipeline creation here.
-    // e.g., you can send `data` back to the UI to indicate a progress bar
-    // console.log('progress', data)
-  });
-
-  // Actually run the model on the input text
-  let result;
-  try {
-    result = await model(text, labelsToUse);
-  } catch (error) {
-    console.error("Error calling model:", error);
-  }
-  console.log("result", result);
-
-  // Reassemble res to have labels as keys and scores as values
-  const res = result.labels.slice(0, 3).reduce((acc, label, index) => {
-    acc[label] = result.scores[index];
-    return acc;
-  }, {});
-
-  console.log("1-res", res);
-
-  return res;
 };
 
 class SimiSearchPipelineSingleton {
@@ -192,7 +201,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     try {
       // Set customLabels in chrome.storage.local
       await promisify(chrome.storage.local.set, {
-        customLabels: candidateLabels,
+        customLabels: [],
       });
 
       // Calculate the timestamp for one month ago
