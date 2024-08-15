@@ -14,7 +14,11 @@ export function getClassifyText(title, url) {
 }
 
 // Asynchronously stores a history item in local storage if it doesn't already exist.
-export const storeHistoryItem = async (historyItem, classifyRessult, embeddingResult) => {
+export const storeHistoryItem = async (
+  historyItem,
+  classifyRessult,
+  embeddingResult
+) => {
   try {
     const storageKey = historyItem.title;
     const result = await promisify(chrome.storage.local.get, ['data']);
@@ -42,7 +46,11 @@ export const storeHistoryItem = async (historyItem, classifyRessult, embeddingRe
   }
 };
 
-export const updateHistoryItem = async (historyItem, classifyRessult, embeddingResult) => {
+export const updateHistoryItem = async (
+  historyItem,
+  classifyRessult,
+  embeddingResult
+) => {
   try {
     const storageKey = historyItem.title;
     const result = await promisify(chrome.storage.local.get, ['data']);
@@ -57,7 +65,9 @@ export const updateHistoryItem = async (historyItem, classifyRessult, embeddingR
           parseFloat(score.toFixed(4))
         ),
         lastVisitTime: historyItem.lastVisitTime,
-        embedding: embeddingResult? embeddingResult : data[storageKey].embedding,
+        embedding: embeddingResult
+          ? embeddingResult
+          : data[storageKey].embedding,
       };
       data[storageKey] = storageValue;
       await promisify(chrome.storage.local.set, { data });
@@ -76,6 +86,15 @@ export const updateNewTags = async (tags) => {
     console.log("customLabels updated successfully.");
   } catch (error) {
     console.error("Error updating customLabels:", error);
+  }
+};
+
+export const updateNewTagsMap = async (tagsMap) => {
+  try {
+    await promisify(chrome.storage.local.set, { tagsCountMap: tagsMap });
+    console.log("tagsMap updated successfully.");
+  } catch (error) {
+    console.error("Error updating tagsMap:", error);
   }
 };
 

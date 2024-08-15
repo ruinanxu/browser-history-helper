@@ -1,13 +1,13 @@
 // background.js - Handles requests from the UI, runs the model, then sends back a response
 
 import { pipeline, env } from "@xenova/transformers";
-import { candidateLabels, maxResults } from "./constants.js";
+import { maxResults } from "./constants.js";
 import {
   cosineSimilarity,
   getClassifyText,
   promisify,
   storeHistoryItem,
-  updateNewTags,
+  updateNewTagsMap,
 } from "./utils.js";
 
 // Skip initial check for local models, since we are not loading any local models.
@@ -65,18 +65,20 @@ const classify = async (text) => {
     const tier2 = result[1]["tier2_result"];
     const tier1_and_tier2 = tier1.concat(tier2);
 
-    let { customLabels: labels } = await promisify(chrome.storage.local.get, [
-      "customLabels",
+    let { tagsCountMap: tagsMap } = await promisify(chrome.storage.local.get, [
+      "tagsCountMap",
     ]);
-    labels = labels || [];
+    tagsMap = tagsMap || {};
 
     tier1_and_tier2.forEach((item) => {
-      if (!labels.includes(item)) {
-        labels.push(item);
+      if (!tagsMap.hasOwnProperty(item)) {
+        tagsMap[item] = 1;
+      } else {
+        tagsMap[item] += 1;
       }
     });
 
-    updateNewTags(labels);
+    updateNewTagsMap(tagsMap);
 
     const res = tier1_and_tier2.reduce((acc, label) => {
       acc[label] = 0.0;
@@ -199,9 +201,9 @@ chrome.history.onVisited.addListener(async (historyItem) => {
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === "install") {
     try {
-      // Set customLabels in chrome.storage.local
+      // Set tagsCountMap in chrome.storage.local
       await promisify(chrome.storage.local.set, {
-        customLabels: [],
+        tagsCountMap: {},
       });
 
       // Calculate the timestamp for one month ago

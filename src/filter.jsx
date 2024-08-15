@@ -55,6 +55,7 @@ export const FilterSection = ({
   selectedTags,
   handleFilterChange,
   tags,
+  tagsCountMap,
   dataState,
   handleItemClick,
 }) => {
@@ -62,6 +63,10 @@ export const FilterSection = ({
   const filteredData = dataState
     .filter((item) => selectedTags.every((tag) => item.tags.includes(tag)))
     .sort((a, b) => b.lastVisitTime - a.lastVisitTime);
+
+  const sortedTags = Object.keys(tagsCountMap).sort(
+    (a, b) => tagsCountMap[b] - tagsCountMap[a]
+  );
 
   return (
     <div className="section result-section">
@@ -74,7 +79,7 @@ export const FilterSection = ({
       <Filter
         selectedTags={selectedTags}
         handleFilterChange={handleFilterChange}
-        options={tags.map((label) => ({ value: label, label }))}
+        options={sortedTags.map((label) => ({ value: label, label }))}
       />
       <FilteredHistoryList
         dataState={filteredData}

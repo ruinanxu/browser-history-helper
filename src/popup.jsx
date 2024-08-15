@@ -56,6 +56,7 @@ function App() {
   const [dataState, setDataState] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
   const [tags, setTags] = useState([]);
+  const [tagsCountMap, setTagsCountMap] = useState({});
   const [currentTab, setCurrentTab] = useState("search");
   const [loading, setLoading] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
@@ -63,9 +64,10 @@ function App() {
   useEffect(() => {
     const fetchCustomLabels = async () => {
       const result = await new Promise((resolve) => {
-        chrome.storage.local.get(["customLabels"], resolve);
+        chrome.storage.local.get(["tagsCountMap"], resolve);
       });
-      setTags(result.customLabels || []);
+      setTags(Object.keys(result.tagsCountMap) || []);
+      setTagsCountMap(result.tagsCountMap || {});
     };
 
     fetchCustomLabels();
@@ -206,6 +208,7 @@ function App() {
             selectedTags={selectedTags}
             handleFilterChange={handleFilterChange}
             tags={tags}
+            tagsCountMap={tagsCountMap}
             dataState={dataState}
             handleItemClick={handleItemClick}
           />
