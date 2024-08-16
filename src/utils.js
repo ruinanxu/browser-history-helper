@@ -16,7 +16,7 @@ export function getClassifyText(title, url) {
 // Asynchronously stores a history item in local storage if it doesn't already exist.
 export const storeHistoryItem = async (historyItem, classifyRessult, embeddingResult) => {
   try {
-    const storageKey = historyItem.url;
+    const storageKey = historyItem.title;
     const result = await promisify(chrome.storage.local.get, ['data']);
     const data = result.data || {};
 
@@ -44,7 +44,7 @@ export const storeHistoryItem = async (historyItem, classifyRessult, embeddingRe
 
 export const updateHistoryItem = async (historyItem, classifyRessult, embeddingResult) => {
   try {
-    const storageKey = historyItem.url;
+    const storageKey = historyItem.title;
     const result = await promisify(chrome.storage.local.get, ['data']);
     const data = result.data || {};
 

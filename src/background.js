@@ -121,8 +121,8 @@ const similaritySearch = async (query) => {
   });
 
   const searchResult = Object.entries(data)
-    .map(([url, item], idx) => ({
-      url,
+    .map(([key, item], idx) => ({
+      url: item.url,
       score: scores[idx],
       title: item.title,
     }))
