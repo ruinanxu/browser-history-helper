@@ -2,15 +2,17 @@ import React, { useState, useEffect, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import "./Popup.css";
 import { Typography, ConfigProvider, Menu as AntMenu } from "antd";
-import { candidateLabels, maxResults } from "./constants.js";
+import { maxResults } from "./constants.js";
 import {
   HistoryOutlined,
   FilterOutlined,
   SettingOutlined,
+  IssuesCloseOutlined,
 } from "@ant-design/icons";
 import { CustomizationSection } from "./customization.jsx";
 import { FilterSection } from "./filter.jsx";
 import { SearchSection } from "./search.jsx";
+import { SuggestSection } from "./suggest.jsx";
 import { updateHistoryItem } from "./utils.js";
 
 const { Title } = Typography;
@@ -27,9 +29,9 @@ const sections = [
     icon: <FilterOutlined />,
   },
   {
-    label: "Customization",
-    key: "customization",
-    icon: <SettingOutlined />,
+    label: "Suggest",
+    key: "suggest",
+    icon: <IssuesCloseOutlined />,
   },
 ];
 
@@ -60,6 +62,7 @@ function App() {
   const [currentTab, setCurrentTab] = useState("search");
   const [loading, setLoading] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
+  const [suggestResults, setSuggestResults] = useState([]);
 
   useEffect(() => {
     const fetchCustomLabels = async () => {
@@ -177,6 +180,23 @@ function App() {
     setSearchResults(response);
   }, []);
 
+  const handleOnSuggest = useCallback(async () => {
+    // Get all tabs in the current window
+    const tab = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    const message = {
+      action: "suggest",
+      query: tab[0].title,
+    };
+
+    const response = await new Promise((resolve) => {
+      chrome.runtime.sendMessage(message, resolve);
+    });
+
+    console.log("received suggest response", response);
+    setSuggestResults(response);
+  }, []);
+
   return (
     <ConfigProvider
       theme={{
@@ -213,11 +233,11 @@ function App() {
             handleItemClick={handleItemClick}
           />
         )}
-        {currentTab === "customization" && (
-          <CustomizationSection
-            tags={tags}
-            setTags={setTags}
-            handleButtonClick={handleButtonClick}
+        {currentTab === "suggest" && (
+          <SuggestSection
+            suggestResults={suggestResults}
+            handleOnSuggest={handleOnSuggest}
+            handleItemClick={handleItemClick}
           />
         )}
       </div>

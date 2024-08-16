@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Typography, List, Avatar, Input, Spin } from "antd";
-import { LoadingOutlined } from "@ant-design/icons";
+import { Typography, List, Avatar, Input } from "antd";
 import { getDomainFromUrl } from "./utils";
 
 const { Title } = Typography;

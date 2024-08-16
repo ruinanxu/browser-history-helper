@@ -148,37 +148,31 @@ const similaritySearch = async (query) => {
 // Listen for messages from the UI, process it, and send the result back.
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log("message", message);
-  if (message.action !== "classify") return; // Ignore messages that are not meant for classification.
 
-  // Run model prediction asynchronously
-  (async function () {
-    // Perform classification
-    let classifyRessult = await classify(
-      getClassifyText(message.text, message.url)
-    );
+  // Define an async function to handle the message
+  const handleMessage = async () => {
+    if (message.action === "classify") {
+      // Perform classification
+      let classifyResult = await classify(
+        getClassifyText(message.text, message.url)
+      );
+      // Send response back to UI
+      sendResponse(classifyResult);
+    } else if (
+      message.action === "simi-search" ||
+      message.action === "suggest"
+    ) {
+      // Perform similarity search
+      let searchResult = await similaritySearch(message.query);
+      // Send response back to UI
+      sendResponse(searchResult);
+    }
+  };
 
-    // Send response back to UI
-    sendResponse(classifyRessult);
-  })();
+  // Run the async function
+  handleMessage();
 
-  // return true to indicate we will send a response asynchronously
-  // see https://stackoverflow.com/a/46628145 for more information
-  return true;
-});
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action !== "simi-search") return; // Ignore messages that are not meant for simi-search.
-
-  // Run model prediction asynchronously
-  (async function () {
-    // Perform similarity search
-    let searchResult = await similaritySearch(message.query);
-
-    // Send response back to UI
-    sendResponse(searchResult);
-  })();
-
-  // return true to indicate we will send a response asynchronously
+  // Return true to indicate we will send a response asynchronously
   // see https://stackoverflow.com/a/46628145 for more information
   return true;
 });
