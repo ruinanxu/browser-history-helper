@@ -20,12 +20,12 @@ h2 {
 }
 
 .container {
-  width: 360px;
+  width: 380px;
 }
 
 html,
 body {
-  min-width: 400px;
+  min-width: 420px;
   min-height: 500px;
 }
 
@@ -58,6 +58,10 @@ body {
 .scrollable-container::-webkit-scrollbar-thumb {
   background-color: #ccc;
   border-radius: 5px;
+}
+
+.suggest-list {
+  height: 332px;
 }
 
 .btn {

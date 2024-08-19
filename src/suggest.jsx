@@ -19,7 +19,7 @@ const descriptionStyle = {
 };
 
 const SuggestResultList = React.memo(({ dataSource, handleItemClick }) => (
-  <div className="scrollable-list-container scrollable-container">
+  <div className="scrollable-list-container scrollable-container suggest-list">
     <List
       itemLayout="horizontal"
       dataSource={dataSource}

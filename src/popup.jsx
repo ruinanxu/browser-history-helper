@@ -8,11 +8,13 @@ import {
   FilterOutlined,
   SettingOutlined,
   IssuesCloseOutlined,
+  TableOutlined,
 } from "@ant-design/icons";
 import { CustomizationSection } from "./customization.jsx";
 import { FilterSection } from "./filter.jsx";
 import { SearchSection } from "./search.jsx";
 import { SuggestSection } from "./suggest.jsx";
+import { StatsSection } from "./stats.jsx";
 import { updateHistoryItem } from "./utils.js";
 
 const { Title } = Typography;
@@ -33,6 +35,11 @@ const sections = [
     key: "suggest",
     icon: <IssuesCloseOutlined />,
   },
+  {
+    label: "Stats",
+    key: "stats",
+    icon: <TableOutlined />,
+  }
 ];
 
 const Menu = ({ current, setCurrent }) => {
@@ -252,6 +259,11 @@ function App() {
           <SuggestSection
             suggestResults={suggestResults}
             handleItemClick={handleItemClick}
+          />
+        )}
+        {currentTab === "stats" && (
+          <StatsSection
+            tagsCountMap={tagsCountMap}
           />
         )}
       </div>
