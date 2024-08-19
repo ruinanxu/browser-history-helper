@@ -97,6 +97,14 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (currentTab === "suggest") {
+      console.log("suggest tab");
+
+      handleOnSuggest();
+    }
+  }, [currentTab]);
+
   ////////////////////// Generate new tags button /////////////////////
   //
   // 1. Generate new tags.
@@ -183,10 +191,11 @@ function App() {
   const handleOnSuggest = useCallback(async () => {
     // Get all tabs in the current window
     const tab = await chrome.tabs.query({ active: true, currentWindow: true });
+    const currentTabTitle = tab[0].title;
 
     const message = {
       action: "suggest",
-      query: tab[0].title,
+      query: currentTabTitle,
     };
 
     const response = await new Promise((resolve) => {
@@ -194,7 +203,13 @@ function App() {
     });
 
     console.log("received suggest response", response);
-    setSuggestResults(response);
+
+    // Filter out items with the same title as the current tab
+    const filteredResponse = response.filter(
+      (item) => item.title !== currentTabTitle
+    );
+
+    setSuggestResults(filteredResponse);
   }, []);
 
   return (
@@ -236,7 +251,6 @@ function App() {
         {currentTab === "suggest" && (
           <SuggestSection
             suggestResults={suggestResults}
-            handleOnSuggest={handleOnSuggest}
             handleItemClick={handleItemClick}
           />
         )}

@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Typography, List, Avatar, Button } from "antd";
+import React from "react";
+import { Typography, List, Avatar } from "antd";
 import { getDomainFromUrl } from "./utils";
 
 const { Title } = Typography;
@@ -47,12 +47,14 @@ const SuggestResultList = React.memo(({ dataSource, handleItemClick }) => (
   </div>
 ));
 
-export const SuggestSection = ({ suggestResults, handleOnSuggest, handleItemClick }) => (
+export const SuggestSection = ({ suggestResults, handleItemClick }) => (
   <div className="section customize-section">
     <Title level={5} style={{ marginBottom: "0.375rem" }}>
       🌈 Suggest
-      <Button type="link" onClick={handleOnSuggest}>See our suggestions</Button>
     </Title>
-    <SuggestResultList dataSource={suggestResults} handleItemClick={handleItemClick} />
+    <SuggestResultList
+      dataSource={suggestResults}
+      handleItemClick={handleItemClick}
+    />
   </div>
 );

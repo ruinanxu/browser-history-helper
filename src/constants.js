@@ -39,8 +39,17 @@ export const candidateLabels = [
 ];
 
 export const colors = [
-  'magenta', 'red', 'volcano', 'orange', 'gold', 
-  'lime', 'green', 'cyan', 'blue', 'geekblue', 'purple'
+  "magenta",
+  "red",
+  "volcano",
+  "orange",
+  "gold",
+  "lime",
+  "green",
+  "cyan",
+  "blue",
+  "geekblue",
+  "purple",
 ];
 
-export const maxResults = 50;
+export const maxResults = 100;
