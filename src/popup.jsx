@@ -15,7 +15,7 @@ import { FilterSection } from "./filter.jsx";
 import { SearchSection } from "./search.jsx";
 import { RecommendSection } from "./recommend.jsx";
 import { StatsSection } from "./stats.jsx";
-import { updateHistoryItem } from "./utils.js";
+import { storeOrUpdateHistoryItem } from "./utils.js";
 
 const { Title } = Typography;
 
@@ -144,7 +144,7 @@ function App() {
       });
 
       console.log("2-received classifyRessult", classifyRessult);
-      await updateHistoryItem(page, classifyRessult, null);
+      await storeOrUpdateHistoryItem(page, classifyRessult, null);
     }
 
     setLoading(false);

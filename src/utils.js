@@ -1,3 +1,15 @@
+export class HitoryStorageItem {
+  constructor(title, url, tags, scores, lastVisitTime, embedding) {
+    this.id = generateId(title);
+    this.title = title;
+    this.url = url;
+    this.tags = tags;
+    this.scores = scores;
+    this.lastVisitTime = lastVisitTime;
+    this.embedding = embedding;
+  }
+}
+
 export function getDomainFromUrl(url) {
   try {
     const urlObject = new URL(url);
@@ -13,70 +25,41 @@ export function getClassifyText(title, url) {
   return `title:${title} domain:${domain}`;
 }
 
-// Asynchronously stores a history item in local storage if it doesn't already exist.
-export const storeHistoryItem = async (
-  historyItem,
-  classifyRessult,
-  embeddingResult
-) => {
-  try {
-    const storageKey = historyItem.title;
-    const result = await promisify(chrome.storage.local.get, ['data']);
-    const data = result.data || {};
-
-    if (!data[storageKey]) {
-      const storageValue = {
-        title: historyItem.title,
-        url: historyItem.url,
-        tags: Object.keys(classifyRessult),
-        scores: Object.values(classifyRessult).map((score) =>
-          parseFloat(score.toFixed(4))
-        ),
-        lastVisitTime: historyItem.lastVisitTime,
-        embedding: embeddingResult,
-      };
-      data[storageKey] = storageValue;
-      await promisify(chrome.storage.local.set, { data });
-      console.log(`Data for ${storageKey} stored successfully.`);
-    } else {
-      await updateHistoryItem(historyItem, classifyRessult, embeddingResult);
-    }
-  } catch (error) {
-    console.error(`Error storing data for ${historyItem.url}:`, error);
+export function generateId(str) {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 33) ^ str.charCodeAt(i);
   }
-};
+  return hash >>> 0;
+}
 
-export const updateHistoryItem = async (
+export const storeOrUpdateHistoryItem = async (
   historyItem,
   classifyRessult,
   embeddingResult
 ) => {
   try {
-    const storageKey = historyItem.title;
+    const storageKey = generateId(historyItem.title);
     const result = await promisify(chrome.storage.local.get, ['data']);
     const data = result.data || {};
 
-    if (data[storageKey]) {
-      const storageValue = {
-        title: historyItem.title,
-        url: historyItem.url,
-        tags: Object.keys(classifyRessult),
-        scores: Object.values(classifyRessult).map((score) =>
-          parseFloat(score.toFixed(4))
-        ),
-        lastVisitTime: historyItem.lastVisitTime,
-        embedding: embeddingResult
-          ? embeddingResult
-          : data[storageKey].embedding,
-      };
-      data[storageKey] = storageValue;
-      await promisify(chrome.storage.local.set, { data });
-      console.log(`Data for ${storageKey} updated successfully.`);
-    } else {
-      console.log(`Storage key ${storageKey} does not exist. Skipping.`);
-    }
+    const storageValue = new HitoryStorageItem(
+      historyItem.title,
+      historyItem.url,
+      Object.keys(classifyRessult),
+      Object.values(classifyRessult).map((score) =>
+        parseFloat(score.toFixed(4))
+      ),
+      historyItem.lastVisitTime,
+      embeddingResult ? embeddingResult : (data[storageKey] ? data[storageKey].embedding : null)
+    );
+
+    data[storageKey] = storageValue;
+    await promisify(chrome.storage.local.set, { data });
+
+    console.log(`Data for ${storageKey} stored or updated successfully.`);
   } catch (error) {
-    console.error(`Error updating data for ${historyItem.url}:`, error);
+    console.error(`Error storing or updating data for ${historyItem.url}:`, error);
   }
 };
 

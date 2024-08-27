@@ -6,7 +6,7 @@ import {
   cosineSimilarity,
   getClassifyText,
   promisify,
-  storeHistoryItem,
+  storeOrUpdateHistoryItem,
   updateNewTagsMap,
 } from "./utils.js";
 
@@ -185,7 +185,7 @@ chrome.history.onVisited.addListener(async (historyItem) => {
       getClassifyText(historyItem.title, historyItem.url)
     );
     const embeddingResult = await encodeText(historyItem.title);
-    await storeHistoryItem(historyItem, classifyRessult, embeddingResult);
+    await storeOrUpdateHistoryItem(historyItem, classifyRessult, embeddingResult);
   } catch (error) {
     console.error(`Error processing history item ${historyItem.url}:`, error);
   }
@@ -214,7 +214,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
             getClassifyText(item.title, item.url)
           );
           const embeddingResult = await encodeText(item.title);
-          await storeHistoryItem(item, classifyRessult, embeddingResult);
+          await storeOrUpdateHistoryItem(item, classifyRessult, embeddingResult);
         }
       }
     } catch (error) {
