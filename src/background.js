@@ -160,7 +160,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse(classifyResult);
     } else if (
       message.action === "simi-search" ||
-      message.action === "suggest"
+      message.action === "recommend"
     ) {
       // Perform similarity search
       let searchResult = await similaritySearch(message.query);

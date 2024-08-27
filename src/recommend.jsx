@@ -18,8 +18,8 @@ const descriptionStyle = {
   fontFamily: "segoe UI",
 };
 
-const SuggestResultList = React.memo(({ dataSource, handleItemClick }) => (
-  <div className="scrollable-list-container scrollable-container suggest-list">
+const RecommendResultList = React.memo(({ dataSource, handleItemClick }) => (
+  <div className="scrollable-list-container scrollable-container recommend-list">
     <List
       itemLayout="horizontal"
       dataSource={dataSource}
@@ -47,13 +47,13 @@ const SuggestResultList = React.memo(({ dataSource, handleItemClick }) => (
   </div>
 ));
 
-export const SuggestSection = ({ suggestResults, handleItemClick }) => (
+export const RecommendSection = ({ recommendResults, handleItemClick }) => (
   <div className="section customize-section">
     <Title level={5} style={{ marginBottom: "0.375rem" }}>
-      🌈 Suggest
+      🌈 Recommend
     </Title>
-    <SuggestResultList
-      dataSource={suggestResults}
+    <RecommendResultList
+      dataSource={recommendResults}
       handleItemClick={handleItemClick}
     />
   </div>

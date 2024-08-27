@@ -13,7 +13,7 @@ import {
 import { CustomizationSection } from "./customization.jsx";
 import { FilterSection } from "./filter.jsx";
 import { SearchSection } from "./search.jsx";
-import { SuggestSection } from "./suggest.jsx";
+import { RecommendSection } from "./recommend.jsx";
 import { StatsSection } from "./stats.jsx";
 import { updateHistoryItem } from "./utils.js";
 
@@ -31,8 +31,8 @@ const sections = [
     icon: <FilterOutlined />,
   },
   {
-    label: "Suggest",
-    key: "suggest",
+    label: "Recommend",
+    key: "recommend",
     icon: <IssuesCloseOutlined />,
   },
   {
@@ -69,7 +69,7 @@ function App() {
   const [currentTab, setCurrentTab] = useState("search");
   const [loading, setLoading] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
-  const [suggestResults, setSuggestResults] = useState([]);
+  const [recommendResults, setRecommendResults] = useState([]);
 
   useEffect(() => {
     const fetchCustomLabels = async () => {
@@ -105,10 +105,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (currentTab === "suggest") {
-      console.log("suggest tab");
+    if (currentTab === "recommend") {
+      console.log("recommend tab");
 
-      handleOnSuggest();
+      handleOnRecommend();
     }
   }, [currentTab]);
 
@@ -195,13 +195,13 @@ function App() {
     setSearchResults(response);
   }, []);
 
-  const handleOnSuggest = useCallback(async () => {
+  const handleOnRecommend = useCallback(async () => {
     // Get all tabs in the current window
     const tab = await chrome.tabs.query({ active: true, currentWindow: true });
     const currentTabTitle = tab[0].title;
 
     const message = {
-      action: "suggest",
+      action: "recommend",
       query: currentTabTitle,
     };
 
@@ -209,14 +209,14 @@ function App() {
       chrome.runtime.sendMessage(message, resolve);
     });
 
-    console.log("received suggest response", response);
+    console.log("received recommend response", response);
 
     // Filter out items with the same title as the current tab
     const filteredResponse = response.filter(
       (item) => item.title !== currentTabTitle
     );
 
-    setSuggestResults(filteredResponse);
+    setRecommendResults(filteredResponse);
   }, []);
 
   return (
@@ -255,9 +255,9 @@ function App() {
             handleItemClick={handleItemClick}
           />
         )}
-        {currentTab === "suggest" && (
-          <SuggestSection
-            suggestResults={suggestResults}
+        {currentTab === "recommend" && (
+          <RecommendSection
+            recommendResults={recommendResults}
             handleItemClick={handleItemClick}
           />
         )}
