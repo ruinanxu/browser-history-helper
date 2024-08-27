@@ -18,6 +18,7 @@ We also support customizing tags, enabling users to define their own tag sets to
 
 ## TODO
 1. **Re-design customization section: Enable users to customize `max number of records` and `History date back to`**
+2. Key is title or url?
 
 ## Getting Started
 

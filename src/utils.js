@@ -33,6 +33,18 @@ export function generateId(str) {
   return hash >>> 0;
 }
 
+export function getStorageItemById(id) {
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.get(['data'], (result) => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        resolve(result.data[id]);
+      }
+    });
+  });
+}
+
 export const storeOrUpdateHistoryItem = async (
   historyItem,
   classifyRessult,
@@ -60,6 +72,26 @@ export const storeOrUpdateHistoryItem = async (
     console.log(`Data for ${storageKey} stored or updated successfully.`);
   } catch (error) {
     console.error(`Error storing or updating data for ${historyItem.url}:`, error);
+  }
+};
+
+export const storeOrUpdateBrowsingPatterns = async (hour, day, historyItem) => {
+  try {
+    const result = await promisify(chrome.storage.local.get, ['browsingPatterns']);
+    const patterns = result.browsingPatterns || {};
+    if (!patterns[hour]) patterns[hour] = {};
+    if (!patterns[hour][day]) patterns[hour][day] = [];
+
+    patterns[hour][day].push({
+      id: generateId(historyItem.title),
+      title: historyItem.title,
+      url: historyItem.url,
+    });
+
+    await promisify(chrome.storage.local.set, { browsingPatterns: patterns });
+    console.log("Browsing patterns stored successfully.");
+  } catch (error) {
+    console.error("Error storing browsing patterns:", error);
   }
 };
 

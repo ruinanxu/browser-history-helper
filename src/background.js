@@ -7,7 +7,9 @@ import {
   getClassifyText,
   promisify,
   storeOrUpdateHistoryItem,
+  storeOrUpdateBrowsingPatterns,
   updateNewTagsMap,
+  getStorageItemById,
 } from "./utils.js";
 
 // Skip initial check for local models, since we are not loading any local models.
@@ -131,16 +133,43 @@ const similaritySearch = async (query) => {
     return cosineSimilarity(queryEmbedding, embedding);
   });
 
-  const searchResult = Object.entries(data)
+  const searchResultIds = Object.entries(data)
     .map(([key, item], idx) => ({
-      url: item.url,
+      id: key,
       score: scores[idx],
-      title: item.title,
     }))
     .filter((item) => item.score > 0.2)
     .sort((a, b) => b.score - a.score);
 
-  return searchResult;
+  return searchResultIds;
+};
+
+const getTimeBasedRecommendations = async () => {
+  const now = new Date();
+  const day = now.getDay();
+  const hour = now.getHours();
+
+  const result = await promisify(chrome.storage.local.get, [
+    "browsingPatterns",
+  ]);
+  const patterns = result.browsingPatterns || {};
+
+  const recommendationIds = [];
+
+  if (patterns[hour] && patterns[hour][day]) {
+    const currentHourData = patterns[hour][day];
+
+    // Analyze patterns and generate recommendations
+    const urlCounts = currentHourData.reduce((acc, item) => {
+      acc[item.id] = acc[item.id] ? acc[item.id] + 1 : 1;
+      return acc;
+    }, {});
+
+    const sortedUrlIds = Object.entries(urlCounts).sort((a, b) => b[1] - a[1]);
+    recommendationIds.push(...sortedUrlIds.map(([id]) => id));
+  }
+
+  return recommendationIds;
 };
 
 ////////////////////// Message Events /////////////////////
@@ -158,14 +187,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       );
       // Send response back to UI
       sendResponse(classifyResult);
-    } else if (
-      message.action === "simi-search" ||
-      message.action === "recommend"
-    ) {
+    } else if (message.action === "simi-search") {
       // Perform similarity search
-      let searchResult = await similaritySearch(message.query);
+      let searchResultIds = await similaritySearch(message.query);
+      let searchResult = await Promise.all(
+        searchResultIds.map(async (item) => {
+          return await getStorageItemById(item.id);
+        })
+      );
       // Send response back to UI
       sendResponse(searchResult);
+    } else if (message.action === "recommend") {
+      let contextBasedResultIds = await similaritySearch(message.query);
+      let timeBasedResultIds = await getTimeBasedRecommendations();
+      contextBasedResultIds = contextBasedResultIds.map((item) => item.id);
+
+      let uniqueResultIds = [
+        ...new Set([...contextBasedResultIds, ...timeBasedResultIds]),
+      ];
+
+      let combinedResult = await Promise.all(
+        uniqueResultIds.map((id) => getStorageItemById(id))
+      );
+
+      sendResponse(combinedResult);
     }
   };
 
@@ -185,10 +230,20 @@ chrome.history.onVisited.addListener(async (historyItem) => {
       getClassifyText(historyItem.title, historyItem.url)
     );
     const embeddingResult = await encodeText(historyItem.title);
-    await storeOrUpdateHistoryItem(historyItem, classifyRessult, embeddingResult);
+    await storeOrUpdateHistoryItem(
+      historyItem,
+      classifyRessult,
+      embeddingResult
+    );
   } catch (error) {
     console.error(`Error processing history item ${historyItem.url}:`, error);
   }
+
+  const currentTime = new Date();
+  const day = currentTime.getDay();
+  const hour = currentTime.getHours();
+
+  await storeOrUpdateBrowsingPatterns(hour, day, historyItem);
 });
 
 // Listener for when the extension is installed.
@@ -214,7 +269,11 @@ chrome.runtime.onInstalled.addListener(async (details) => {
             getClassifyText(item.title, item.url)
           );
           const embeddingResult = await encodeText(item.title);
-          await storeOrUpdateHistoryItem(item, classifyRessult, embeddingResult);
+          await storeOrUpdateHistoryItem(
+            item,
+            classifyRessult,
+            embeddingResult
+          );
         }
       }
     } catch (error) {
