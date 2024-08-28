@@ -50,7 +50,7 @@ const RecommendResultList = React.memo(({ dataSource, handleItemClick }) => (
 export const RecommendSection = ({ recommendResults, handleItemClick }) => (
   <div className="section customize-section">
     <Title level={5} style={{ marginBottom: "0.375rem" }}>
-      🌈 Recommend
+      🌈 Recommendations
     </Title>
     <RecommendResultList
       dataSource={recommendResults}

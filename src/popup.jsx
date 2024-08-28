@@ -4,13 +4,11 @@ import "./Popup.css";
 import { Typography, ConfigProvider, Menu as AntMenu } from "antd";
 import { maxResults } from "./constants.js";
 import {
-  HistoryOutlined,
+  SearchOutlined,
   FilterOutlined,
-  SettingOutlined,
-  IssuesCloseOutlined,
+  HeartOutlined,
   TableOutlined,
 } from "@ant-design/icons";
-import { CustomizationSection } from "./customization.jsx";
 import { FilterSection } from "./filter.jsx";
 import { SearchSection } from "./search.jsx";
 import { RecommendSection } from "./recommend.jsx";
@@ -23,7 +21,7 @@ const sections = [
   {
     label: "Search",
     key: "search",
-    icon: <HistoryOutlined />,
+    icon: <SearchOutlined />,
   },
   {
     label: "Filter",
@@ -33,7 +31,7 @@ const sections = [
   {
     label: "Recommend",
     key: "recommend",
-    icon: <IssuesCloseOutlined />,
+    icon: <HeartOutlined />,
   },
   {
     label: "Stats",

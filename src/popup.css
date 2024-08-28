@@ -20,12 +20,12 @@ h2 {
 }
 
 .container {
-  width: 380px;
+  width: 400px;
 }
 
 html,
 body {
-  min-width: 420px;
+  min-width: 440px;
   min-height: 500px;
 }
 
@@ -61,7 +61,7 @@ body {
 }
 
 .recommend-list {
-  height: 332px;
+  height: 334px;
 }
 
 .btn {

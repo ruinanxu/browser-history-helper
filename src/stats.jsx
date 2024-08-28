@@ -1,19 +1,39 @@
-import React from 'react';
-import { PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis } from 'recharts';
+import React from "react";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  BarChart,
+  LineChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Line,
+} from "recharts";
 import { Typography } from "antd";
 
 const { Title } = Typography;
 
 const PieChartArea = ({ tagsCountMap }) => {
   const data = Object.keys(tagsCountMap)
-    .filter(tag => tagsCountMap[tag] > 4)
-    .map(tag => ({
+    .filter((tag) => tagsCountMap[tag] > 4)
+    .map((tag) => ({
       name: tag,
       value: tagsCountMap[tag],
     }))
     .sort((a, b) => a.value - b.value);
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#FF6384', '#36A2EB', '#FFCE56'];
+  const COLORS = [
+    "#0088FE",
+    "#00C49F",
+    "#FFBB28",
+    "#FF8042",
+    "#FF6384",
+    "#36A2EB",
+    "#FFCE56",
+  ];
 
   return (
     <div>
@@ -42,7 +62,7 @@ const PieChartArea = ({ tagsCountMap }) => {
 
 const BarChartArea = ({ tagsCountMap }) => {
   const data = Object.keys(tagsCountMap)
-    .map(tag => ({
+    .map((tag) => ({
       name: tag,
       value: tagsCountMap[tag],
     }))
@@ -64,15 +84,46 @@ const BarChartArea = ({ tagsCountMap }) => {
   );
 };
 
+const LineChartArea = ({ tagsCountMap }) => {
+  const data = Object.keys(tagsCountMap)
+    .map((tag) => ({
+      name: tag,
+      value: tagsCountMap[tag],
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  return (
+    <div>
+      <Title level={5} style={{ marginBottom: "0.375rem" }}>
+        Tags Line Chart
+      </Title>
+      <LineChart width={400} height={180} data={data}>
+        <XAxis dataKey="name" />
+        <YAxis />
+        <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
+        <Tooltip />
+        <Line type="monotone" dataKey="value" stroke="#8884d8" />
+      </LineChart>
+    </div>
+  );
+};
+
 export const StatsSection = ({ tagsCountMap }) => {
   return (
     <div className="section result-section">
       <Title level={5} style={{ marginBottom: "0.375rem" }}>
         📈 Statistics
       </Title>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <PieChartArea tagsCountMap={tagsCountMap} />
-        <BarChartArea tagsCountMap={tagsCountMap} />
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ flex: 1, marginRight: "1rem" }}>
+          <BarChartArea tagsCountMap={tagsCountMap} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <PieChartArea tagsCountMap={tagsCountMap} />
+        </div>
+      </div>
+      <div style={{ marginTop: "1rem" }}>
+        <LineChartArea tagsCountMap={tagsCountMap} />
       </div>
     </div>
   );

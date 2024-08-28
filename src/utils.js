@@ -35,7 +35,7 @@ export function generateId(str) {
 
 export function getStorageItemById(id) {
   return new Promise((resolve, reject) => {
-    chrome.storage.local.get(['data'], (result) => {
+    chrome.storage.local.get(["data"], (result) => {
       if (chrome.runtime.lastError) {
         reject(chrome.runtime.lastError);
       } else {
@@ -45,6 +45,55 @@ export function getStorageItemById(id) {
   });
 }
 
+function analyzePatterns(data, minCount, maxResults) {
+  const urlCounts = data.reduce((acc, id) => {
+    acc[id] = acc[id] ? acc[id] + 1 : 1;
+    return acc;
+  }, {});
+
+  return Object.entries(urlCounts)
+    .filter(([id, count]) => count > minCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, maxResults)
+    .map(([id]) => id);
+}
+
+export function getCurrentHourRecommendations(patterns) {
+  const now = new Date();
+  const hour = now.getHours();
+  const currentHourData = Object.values(patterns)
+    .map((dailyData) => dailyData[hour] || [])
+    .flat();
+
+  const recommendationIds = analyzePatterns(currentHourData, 5, 3);
+  console.log("hour", recommendationIds);
+  return recommendationIds;
+}
+
+export function getCurrentDayRecommendations(patterns) {
+  const now = new Date();
+  const day = now.getDay();
+  const currentDayData = patterns[day]
+    ? Object.values(patterns[day]).flat()
+    : [];
+
+  const recommendationIds = analyzePatterns(currentDayData, 5, 3);
+  console.log("day", recommendationIds);
+  return recommendationIds;
+}
+
+export function getCurrentDayAndHourRecommendations(patterns) {
+  const now = new Date();
+  const day = now.getDay();
+  const hour = now.getHours();
+  const currentHourData =
+    patterns[day] && patterns[day][hour] ? patterns[day][hour] : [];
+
+  const recommendationIds = analyzePatterns(currentHourData, 3, 2);
+  console.log("day and hour", recommendationIds);
+  return recommendationIds;
+}
+
 export const storeOrUpdateHistoryItem = async (
   historyItem,
   classifyRessult,
@@ -52,7 +101,7 @@ export const storeOrUpdateHistoryItem = async (
 ) => {
   try {
     const storageKey = generateId(historyItem.title);
-    const result = await promisify(chrome.storage.local.get, ['data']);
+    const result = await promisify(chrome.storage.local.get, ["data"]);
     const data = result.data || {};
 
     const storageValue = new HitoryStorageItem(
@@ -63,7 +112,11 @@ export const storeOrUpdateHistoryItem = async (
         parseFloat(score.toFixed(4))
       ),
       historyItem.lastVisitTime,
-      embeddingResult ? embeddingResult : (data[storageKey] ? data[storageKey].embedding : null)
+      embeddingResult
+        ? embeddingResult
+        : data[storageKey]
+        ? data[storageKey].embedding
+        : null
     );
 
     data[storageKey] = storageValue;
@@ -71,22 +124,23 @@ export const storeOrUpdateHistoryItem = async (
 
     console.log(`Data for ${storageKey} stored or updated successfully.`);
   } catch (error) {
-    console.error(`Error storing or updating data for ${historyItem.url}:`, error);
+    console.error(
+      `Error storing or updating data for ${historyItem.url}:`,
+      error
+    );
   }
 };
 
-export const storeOrUpdateBrowsingPatterns = async (hour, day, historyItem) => {
+export const storeOrUpdateBrowsingPatterns = async (day, hour, historyItem) => {
   try {
-    const result = await promisify(chrome.storage.local.get, ['browsingPatterns']);
+    const result = await promisify(chrome.storage.local.get, [
+      "browsingPatterns",
+    ]);
     const patterns = result.browsingPatterns || {};
-    if (!patterns[hour]) patterns[hour] = {};
-    if (!patterns[hour][day]) patterns[hour][day] = [];
+    if (!patterns[day]) patterns[day] = {};
+    if (!patterns[day][hour]) patterns[day][hour] = [];
 
-    patterns[hour][day].push({
-      id: generateId(historyItem.title),
-      title: historyItem.title,
-      url: historyItem.url,
-    });
+    patterns[day][hour].push(generateId(historyItem.title));
 
     await promisify(chrome.storage.local.set, { browsingPatterns: patterns });
     console.log("Browsing patterns stored successfully.");

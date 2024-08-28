@@ -10,6 +10,9 @@ import {
   storeOrUpdateBrowsingPatterns,
   updateNewTagsMap,
   getStorageItemById,
+  getCurrentDayRecommendations,
+  getCurrentHourRecommendations,
+  getCurrentDayAndHourRecommendations,
 } from "./utils.js";
 
 // Skip initial check for local models, since we are not loading any local models.
@@ -145,29 +148,16 @@ const similaritySearch = async (query) => {
 };
 
 const getTimeBasedRecommendations = async () => {
-  const now = new Date();
-  const day = now.getDay();
-  const hour = now.getHours();
-
   const result = await promisify(chrome.storage.local.get, [
     "browsingPatterns",
   ]);
   const patterns = result.browsingPatterns || {};
 
-  const recommendationIds = [];
-
-  if (patterns[hour] && patterns[hour][day]) {
-    const currentHourData = patterns[hour][day];
-
-    // Analyze patterns and generate recommendations
-    const urlCounts = currentHourData.reduce((acc, item) => {
-      acc[item.id] = acc[item.id] ? acc[item.id] + 1 : 1;
-      return acc;
-    }, {});
-
-    const sortedUrlIds = Object.entries(urlCounts).sort((a, b) => b[1] - a[1]);
-    recommendationIds.push(...sortedUrlIds.map(([id]) => id));
-  }
+  const recommendationIds = [
+    ...getCurrentDayRecommendations(patterns),
+    ...getCurrentHourRecommendations(patterns),
+    ...getCurrentDayAndHourRecommendations(patterns),
+  ];
 
   return recommendationIds;
 };
@@ -243,7 +233,7 @@ chrome.history.onVisited.addListener(async (historyItem) => {
   const day = currentTime.getDay();
   const hour = currentTime.getHours();
 
-  await storeOrUpdateBrowsingPatterns(hour, day, historyItem);
+  await storeOrUpdateBrowsingPatterns(day, hour, historyItem);
 });
 
 // Listener for when the extension is installed.
