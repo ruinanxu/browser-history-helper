@@ -61,8 +61,15 @@ function analyzePatterns(data, minCount, maxResults) {
 export function getCurrentHourRecommendations(patterns) {
   const now = new Date();
   const hour = now.getHours();
+  const previousHour = (hour - 1 + 24) % 24;
+  const nextHour = (hour + 1) % 24;
+
   const currentHourData = Object.values(patterns)
-    .map((dailyData) => dailyData[hour] || [])
+    .map((dailyData) => [
+      ...(dailyData[previousHour] || []),
+      ...(dailyData[hour] || []),
+      ...(dailyData[nextHour] || []),
+    ])
     .flat();
 
   const recommendationIds = analyzePatterns(currentHourData, 5, 3);
