@@ -3,8 +3,8 @@ import { Input, Tag, Typography, Button, Statistic } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { TweenOneGroup } from "rc-tween-one";
 import { theme } from "antd";
-import { colors } from "./constants";
-import { updateNewTags } from "./utils";
+import { colors } from "../constants";
+import { updateNewTags } from "../utils";
 
 const { Title } = Typography;
 

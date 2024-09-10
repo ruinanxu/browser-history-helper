@@ -1,6 +1,6 @@
 import React from "react";
 import { Typography, List, Avatar } from "antd";
-import { getDomainFromUrl } from "./utils";
+import { getDomainFromUrl } from "../utils";
 
 const { Title } = Typography;
 

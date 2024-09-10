@@ -13,8 +13,9 @@ const config = {
     devtool: 'inline-source-map',
     entry: {
         background: './src/background.js',
-        popup: './src/popup.jsx',
+        popup: './src/popup/popup.jsx',
         content: './src/content.js',
+        page: './src/page/page.jsx',
     },
     output: {
         path: path.resolve(__dirname, 'build'),
@@ -41,8 +42,12 @@ const config = {
     },
     plugins: [
         new HtmlWebpackPlugin({
-            template: './src/popup.html',
-            filename: 'popup.html',
+            template: './src/popup/popup.html',
+            filename: 'popup/popup.html',
+        }),
+        new HtmlWebpackPlugin({
+            template: './src/page/page.html',
+            filename: 'page/page.html',
         }),
         new CopyPlugin({
             patterns: [
@@ -51,8 +56,12 @@ const config = {
                     to: "." // Copies to build folder
                 },
                 {
-                    from: "src/popup.css",
-                    to: "popup.css"
+                    from: "src/popup/popup.css",
+                    to: "popup/popup.css"
+                },
+                {
+                    from: "src/page/page.css",
+                    to: "page/page.css"
                 }
             ],
         })

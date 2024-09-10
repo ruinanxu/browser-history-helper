@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import "./Popup.css";
-import { Typography, ConfigProvider, Menu as AntMenu } from "antd";
-import { maxResults } from "./constants.js";
+import { Typography, ConfigProvider, Menu as AntMenu, Button } from "antd";
+import { maxResults } from "../constants.js";
 import {
   SearchOutlined,
   FilterOutlined,
   HeartOutlined,
   TableOutlined,
+  MoreOutlined,
 } from "@ant-design/icons";
 import { FilterSection } from "./filter.jsx";
 import { SearchSection } from "./search.jsx";
 import { RecommendSection } from "./recommend.jsx";
 import { StatsSection } from "./stats.jsx";
-import { storeOrUpdateHistoryItem } from "./utils.js";
+import { storeOrUpdateHistoryItem } from "../utils.js";
 
 const { Title } = Typography;
 
@@ -37,7 +38,7 @@ const sections = [
     label: "Stats",
     key: "stats",
     icon: <TableOutlined />,
-  }
+  },
 ];
 
 const Menu = ({ current, setCurrent }) => {
@@ -217,6 +218,10 @@ function App() {
     setRecommendResults(filteredResponse);
   }, []);
 
+  const handleOpenPage = useCallback(() => {
+    chrome.tabs.create({ url: "page/page.html", active: true });
+  }, []);
+
   return (
     <ConfigProvider
       theme={{
@@ -226,13 +231,14 @@ function App() {
       }}
     >
       <div className="container">
-        <Title
-          level={3}
-          className="title"
-          style={{ marginBottom: "6px", marginTop: "6px" }}
-        >
-          Browser History Helper
-        </Title>
+        <div className="title-container">
+          <Title level={4} className="title">
+            🎈 Browser History Helper
+          </Title>
+          <Button type="text" onClick={handleOpenPage} className="more-icon-button">
+            <MoreOutlined className="more-icon" />
+          </Button>
+        </div>
         <Menu current={currentTab} setCurrent={setCurrentTab} />
         {currentTab === "search" && (
           <SearchSection
@@ -259,16 +265,14 @@ function App() {
             handleItemClick={handleItemClick}
           />
         )}
-        {currentTab === "stats" && (
-          <StatsSection
-            tagsCountMap={tagsCountMap}
-          />
-        )}
+        {currentTab === "stats" && <StatsSection tagsCountMap={tagsCountMap} />}
       </div>
     </ConfigProvider>
   );
 }
 
 const elem = document.getElementById("app-root");
-const root = createRoot(elem);
-root.render(<App />);
+if (elem) {
+  const root = createRoot(elem);
+  root.render(<App />);
+}

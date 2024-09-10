@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Typography, List, Avatar, Input } from "antd";
-import { getDomainFromUrl } from "./utils";
+import { getDomainFromUrl } from "../utils";
 
 const { Title } = Typography;
 const { Search } = Input;

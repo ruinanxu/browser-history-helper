@@ -24,12 +24,12 @@ h2 {
 }
 
 html,
-body {
+#popup-body {
   min-width: 440px;
   min-height: 500px;
 }
 
-body {
+#popup-body {
   display: flex;
   justify-content: center;
 }
@@ -83,9 +83,26 @@ body {
   margin-top: 4px;
 }
 
-.title {
+.title-container {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  margin-bottom: 6px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+}
+
+.more-icon-button {
+  padding: 0;
+}
+
+.more-icon {
+  cursor: pointer;
+  font-size: 16px;
 }
 
 .footer {
