@@ -258,6 +258,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
           const classifyRessult = await classify(
             getClassifyText(item.title, item.url)
           );
+          console.log('title', item.title);
           const embeddingResult = await encodeText(item.title);
           await storeOrUpdateHistoryItem(
             item,

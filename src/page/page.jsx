@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { createRoot } from "react-dom/client";
-import { Tabs } from "antd";
+import { Tabs, Table } from "antd";
 import {
   PieChart,
   Pie,
@@ -18,6 +18,41 @@ import {
 import "./page.css";
 
 const { TabPane } = Tabs;
+
+const DomainTable = ({ domainCountMap }) => {
+  const data = Object.keys(domainCountMap)
+    .map((domain) => ({
+      domain,
+      count: domainCountMap[domain],
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  const columns = [
+    {
+      title: "Domain",
+      dataIndex: "domain",
+      key: "domain",
+    },
+    {
+      title: "Visit Count",
+      dataIndex: "count",
+      key: "count",
+    },
+  ];
+
+  return (
+    <div>
+      <h2>Top 10 Domains by Visit Count</h2>
+      <Table
+        columns={columns}
+        dataSource={data}
+        pagination={false}
+        rowKey="domain"
+      />
+    </div>
+  );
+};
 
 const PieChartArea = ({ tagsCountMap }) => {
   const data = Object.keys(tagsCountMap)
@@ -108,6 +143,7 @@ const LineChartArea = ({ tagsCountMap }) => {
 function HistoryPage() {
   const [visitData, setVisitData] = useState([]);
   const [tagsCountMap, setTagsCountMap] = useState({});
+  const [domainCountMap, setDomainCountMap] = useState({});
 
   const handleLoadData = useCallback(() => {
     return new Promise((resolve) => {
@@ -120,18 +156,31 @@ function HistoryPage() {
             return value;
           }
         });
-        resolve(parsedData);
+
+        const domainCountMap = {};
+        parsedData.forEach((item) => {
+          const url = new URL(item.url);
+          const domain = url.hostname;
+          if (domainCountMap[domain]) {
+            domainCountMap[domain]++;
+          } else {
+            domainCountMap[domain] = 1;
+          }
+        });
+
+        resolve({ parsedData, domainCountMap });
       });
     });
   }, []);
 
   useEffect(() => {
-    handleLoadData().then((storageData) => {
-      const visits = storageData.map((item) => ({
+    handleLoadData().then(({ parsedData, domainCountMap }) => {
+      const visits = parsedData.map((item) => ({
         url: item.url,
         visitTime: new Date(item.lastVisitTime),
       }));
       setVisitData(visits);
+      setDomainCountMap(domainCountMap);
     });
   }, [handleLoadData]);
 
@@ -224,7 +273,10 @@ function HistoryPage() {
         <TabPane tab="History Statistics" key="1">
           <h1>History Statistics</h1>
           <div className="grid-container">
-            <div className="chart-container chart-item">
+            <div className="chart-container table-item-1">
+              <DomainTable domainCountMap={domainCountMap} />
+            </div>
+            <div className="chart-container chart-item-1">
               <h2>Visits by Time of Day</h2>
               <BarChart width={600} height={300} data={timeOfDayData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -251,7 +303,7 @@ function HistoryPage() {
                 <Bar dataKey="value" fill="#ff7300" />
               </BarChart>
             </div>
-            <div className="chart-container chart-item">
+            <div className="chart-container chart-item-2">
               <h2>Visits by Day of Week</h2>
               <BarChart width={600} height={300} data={dayOfWeekData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -262,7 +314,7 @@ function HistoryPage() {
                 <Bar dataKey="value" fill="#ffc658" />
               </BarChart>
             </div>
-            <div className="chart-container chart-item">
+            <div className="chart-container chart-item-3">
               <h2>Visits by Day of Month</h2>
               <BarChart width={600} height={300} data={dayOfMonthData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -273,7 +325,7 @@ function HistoryPage() {
                 <Bar dataKey="value" fill="#82ca9d" />
               </BarChart>
             </div>
-            <div className="chart-container chart-item">
+            <div className="chart-container chart-item-4">
               <h2>Visits by Month</h2>
               <BarChart width={600} height={300} data={monthData}>
                 <CartesianGrid strokeDasharray="3 3" />
