@@ -15,6 +15,7 @@ import { SearchSection } from "./search.jsx";
 import { RecommendSection } from "./recommend.jsx";
 import { StatsSection } from "./stats.jsx";
 import { storeOrUpdateHistoryItem } from "../utils.js";
+import { FinalSection } from "./final.jsx";
 
 const { Title } = Typography;
 
@@ -35,8 +36,8 @@ const sections = [
     icon: <HeartOutlined />,
   },
   {
-    label: "Stats",
-    key: "stats",
+    label: "Final",
+    key: "final",
     icon: <TableOutlined />,
   },
 ];
@@ -104,9 +105,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (currentTab === "recommend") {
-      console.log("recommend tab");
-
+    if (currentTab === "recommend" || currentTab === "final") {
       handleOnRecommend();
     }
   }, [currentTab]);
@@ -235,7 +234,11 @@ function App() {
           <Title level={4} className="title">
             🎈 Browser History Helper
           </Title>
-          <Button type="text" onClick={handleOpenPage} className="more-icon-button">
+          <Button
+            type="text"
+            onClick={handleOpenPage}
+            className="more-icon-button"
+          >
             <MoreOutlined className="more-icon" />
           </Button>
         </div>
@@ -265,7 +268,15 @@ function App() {
             handleItemClick={handleItemClick}
           />
         )}
-        {currentTab === "stats" && <StatsSection tagsCountMap={tagsCountMap} />}
+        {currentTab === "final" && (
+          <FinalSection
+            searchResults={searchResults}
+            recommendResults={recommendResults}
+            dataState={dataState}
+            handleItemClick={handleItemClick}
+            handleOnSearch={handleOnSearch}
+          />
+        )}
       </div>
     </ConfigProvider>
   );

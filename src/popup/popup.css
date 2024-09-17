@@ -116,3 +116,12 @@ html,
   justify-content: space-evenly;
   margin-top: 10px;
 }
+
+.recommended-container {
+  height: 160px;
+  width: 100%;
+}
+
+.container-margin {
+  margin-bottom: 12px;
+}
