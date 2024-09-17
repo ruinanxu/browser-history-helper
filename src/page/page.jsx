@@ -15,6 +15,11 @@ import {
   Tooltip,
   Legend,
   ComposedChart,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
 } from "recharts";
 import "./page.css";
 
@@ -163,6 +168,61 @@ const LineChartArea = ({ tagsCountMap }) => {
   );
 };
 
+const RadarChartArea = ({ tagsCountMap }) => {
+  const categories = [
+    "shopping",
+    "technology",
+    "game",
+    "politics",
+    "search",
+    "philosophy",
+    "travel",
+    "productivity",
+    "entertainment",
+    "business",
+    "history",
+    "vehicle",
+    "education",
+    "law&government",
+    "art",
+    "sport",
+    "science",
+    "news",
+    "job",
+  ];
+
+  const data = categories.map((category) => ({
+    category,
+    value: tagsCountMap[category] || 0,
+  }));
+
+  return (
+    <div>
+      <h2>Tags Radar Chart</h2>
+      <RadarChart
+        cx={300}
+        cy={250}
+        outerRadius={150}
+        width={600}
+        height={500}
+        data={data}
+      >
+        <PolarGrid />
+        <PolarAngleAxis dataKey="category" />
+        <PolarRadiusAxis />
+        <Radar
+          name="Tags"
+          dataKey="value"
+          stroke="#8884d8"
+          fill="#8884d8"
+          fillOpacity={0.6}
+        />
+        <Tooltip />
+      </RadarChart>
+    </div>
+  );
+};
+
 function HistoryPage() {
   const [visitData, setVisitData] = useState([]);
   const [tagsCountMap, setTagsCountMap] = useState({});
@@ -185,10 +245,12 @@ function HistoryPage() {
         parsedData.forEach((item) => {
           const url = new URL(item.url);
           const domain = url.hostname;
-          if (domainCountMap[domain]) {
-            domainCountMap[domain]++;
-          } else {
-            domainCountMap[domain] = 1;
+          if (domain) {
+            if (domainCountMap[domain]) {
+              domainCountMap[domain]++;
+            } else {
+              domainCountMap[domain] = 1;
+            }
           }
         });
 
@@ -233,6 +295,8 @@ function HistoryPage() {
         visitTime: new Date(item.lastVisitTime),
       }));
       setVisitData(visits);
+      console.log("domainCountMap", domainCountMap);
+      
       setDomainCountMap(domainCountMap);
       setRecentSearches(searchKeywords);
     });
@@ -405,6 +469,9 @@ function HistoryPage() {
             </div>
             <div className="chart-container tag-line-charts">
               <LineChartArea tagsCountMap={tagsCountMap} />
+            </div>
+            <div className="chart-container tag-radar-charts">
+              <RadarChartArea tagsCountMap={tagsCountMap} />
             </div>
           </div>
         </TabPane>
