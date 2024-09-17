@@ -268,7 +268,6 @@ function HistoryPage() {
 
             for (let engine in searchEngines) {
               if (url.hostname.includes(engine)) {
-                console.log("url", url, "engine", engine);
                 const queryParam = searchEngines[engine];
                 const searchKeyword = url.searchParams.get(queryParam);
 
@@ -295,8 +294,6 @@ function HistoryPage() {
         visitTime: new Date(item.lastVisitTime),
       }));
       setVisitData(visits);
-      console.log("domainCountMap", domainCountMap);
-      
       setDomainCountMap(domainCountMap);
       setRecentSearches(searchKeywords);
     });
@@ -340,50 +337,70 @@ function HistoryPage() {
     ];
     const timeLabels = [
       "12AM",
+      "1AM",
       "2AM",
+      "3AM",
       "4AM",
+      "5AM",
       "6AM",
+      "7AM",
       "8AM",
+      "9AM",
       "10AM",
+      "11AM",
       "12PM",
+      "1PM",
       "2PM",
+      "3PM",
       "4PM",
+      "5PM",
       "6PM",
+      "7PM",
       "8PM",
+      "9PM",
       "10PM",
+      "11PM",
     ];
 
     data.forEach((item) => {
       let key;
       switch (type) {
-        case "month":
-          key = monthNames[item.visitTime.getMonth()];
-          break;
-        case "dayOfMonth":
-          key = item.visitTime.getDate();
-          break;
-        case "dayOfWeek":
-          key = dayNames[item.visitTime.getDay()];
-          break;
-        case "timeOfDay":
-          key = timeLabels[Math.floor(item.visitTime.getHours() / 2)];
-          break;
-        default:
-          key = "";
+      case "month":
+        key = monthNames[item.visitTime.getMonth()];
+        break;
+      case "dayOfMonth":
+        key = item.visitTime.getDate();
+        break;
+      case "dayOfWeek":
+        key = dayNames[item.visitTime.getDay()];
+        break;
+      case "timeOfDay":
+        key = timeLabels[item.visitTime.getHours()];
+        break;
+      default:
+        key = "";
       }
       if (result[key]) {
-        result[key]++;
+      result[key]++;
       } else {
-        result[key] = 1;
+      result[key] = 1;
       }
     });
-    return Object.entries(result).map(([label, value]) => ({ label, value }));
-  };
+    const processedData = Object.entries(result).map(([label, value]) => ({ label, value }));
+    if (type === "timeOfDay") {
+      processedData.sort((a, b) => timeLabels.indexOf(a.label) - timeLabels.indexOf(b.label));
+    } else if (type === "dayOfWeek") {
+      processedData.sort((a, b) => dayNames.indexOf(a.label) - dayNames.indexOf(b.label));
+    } else if (type === "month") {
+      processedData.sort((a, b) => monthNames.indexOf(a.label) - monthNames.indexOf(b.label));
+    }
+    return processedData;
+    };
 
-  const monthData = processData(visitData, "month");
-  const dayOfMonthData = processData(visitData, "dayOfMonth");
-  const dayOfWeekData = processData(visitData, "dayOfWeek");
-  const timeOfDayData = processData(visitData, "timeOfDay");
+    const monthData = processData(visitData, "month");
+    const dayOfMonthData = processData(visitData, "dayOfMonth");
+    const dayOfWeekData = processData(visitData, "dayOfWeek");
+    const timeOfDayData = processData(visitData, "timeOfDay");
 
   return (
     <div className="history-page">
@@ -401,23 +418,7 @@ function HistoryPage() {
               <h2>Visits by Time of Day</h2>
               <ComposedChart width={600} height={300} data={timeOfDayData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="label"
-                  ticks={[
-                    "12AM",
-                    "2AM",
-                    "4AM",
-                    "6AM",
-                    "8AM",
-                    "10AM",
-                    "12PM",
-                    "2PM",
-                    "4PM",
-                    "6PM",
-                    "8PM",
-                    "10PM",
-                  ]}
-                />
+                <XAxis dataKey="label" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
