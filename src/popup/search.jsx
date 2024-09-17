@@ -68,18 +68,22 @@ export const SearchSection = ({
   // Set initial data source
   // Set data source to initial data state when data state changes
   useEffect(() => {
-    setDataSource(dataState.sort((a, b) => b.lastVisitTime - a.lastVisitTime));
+    setDataSource(
+      dataState
+        .filter((item) => item.title && item.url)
+        .sort((a, b) => b.lastVisitTime - a.lastVisitTime)
+    );
   }, [dataState]);
 
   // Set data source to search results when searching
   useEffect(() => {
-    setDataSource(searchResults);
+    setDataSource(searchResults.filter((item) => item.title && item.url));
   }, [searchResults]);
 
   // Set data source to initial data state when search box is empty
   const handleSearchBoxOnChange = (e) => {
     if (e.target.value === "") {
-      setDataSource(dataState);
+      setDataSource(dataState.filter((item) => item.title && item.url));
     }
   };
 

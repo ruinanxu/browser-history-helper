@@ -14,6 +14,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ComposedChart,
 } from "recharts";
 import "./page.css";
 
@@ -50,6 +51,28 @@ const DomainTable = ({ domainCountMap }) => {
         pagination={false}
         rowKey="domain"
       />
+    </div>
+  );
+};
+
+const RecentSearchesTable = ({ recentSearches }) => {
+  const data = recentSearches.map((search, index) => ({
+    key: index,
+    search,
+  }));
+
+  const columns = [
+    {
+      title: "Recent Searches",
+      dataIndex: "search",
+      key: "search",
+    },
+  ];
+
+  return (
+    <div>
+      <h2>Recent Searches</h2>
+      <Table columns={columns} dataSource={data} pagination={false} />
     </div>
   );
 };
@@ -144,6 +167,7 @@ function HistoryPage() {
   const [visitData, setVisitData] = useState([]);
   const [tagsCountMap, setTagsCountMap] = useState({});
   const [domainCountMap, setDomainCountMap] = useState({});
+  const [recentSearches, setRecentSearches] = useState([]);
 
   const handleLoadData = useCallback(() => {
     return new Promise((resolve) => {
@@ -168,19 +192,49 @@ function HistoryPage() {
           }
         });
 
-        resolve({ parsedData, domainCountMap });
+        const searchKeywords = [];
+        const searchEngines = {
+          "google.com": "q",
+          "bing.com": "q",
+          "search.yahoo.com": "p",
+          "duckduckgo.com": "q",
+        };
+
+        for (let item of parsedData) {
+          try {
+            const url = new URL(item.url);
+
+            for (let engine in searchEngines) {
+              if (url.hostname.includes(engine)) {
+                console.log("url", url, "engine", engine);
+                const queryParam = searchEngines[engine];
+                const searchKeyword = url.searchParams.get(queryParam);
+
+                if (searchKeyword) {
+                  searchKeywords.push(searchKeyword);
+                }
+              }
+            }
+            if (searchKeywords.length >= 10) break;
+          } catch (e) {
+            console.error("Error parsing URL:", item.url);
+          }
+        }
+
+        resolve({ parsedData, domainCountMap, searchKeywords });
       });
     });
   }, []);
 
   useEffect(() => {
-    handleLoadData().then(({ parsedData, domainCountMap }) => {
+    handleLoadData().then(({ parsedData, domainCountMap, searchKeywords }) => {
       const visits = parsedData.map((item) => ({
         url: item.url,
         visitTime: new Date(item.lastVisitTime),
       }));
       setVisitData(visits);
       setDomainCountMap(domainCountMap);
+      setRecentSearches(searchKeywords);
     });
   }, [handleLoadData]);
 
@@ -276,9 +330,12 @@ function HistoryPage() {
             <div className="chart-container table-item-1">
               <DomainTable domainCountMap={domainCountMap} />
             </div>
+            <div className="chart-container table-item-2">
+              <RecentSearchesTable recentSearches={recentSearches} />
+            </div>
             <div className="chart-container chart-item-1">
               <h2>Visits by Time of Day</h2>
-              <BarChart width={600} height={300} data={timeOfDayData}>
+              <ComposedChart width={600} height={300} data={timeOfDayData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   dataKey="label"
@@ -301,40 +358,44 @@ function HistoryPage() {
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="value" fill="#ff7300" />
-              </BarChart>
+                <Line type="monotone" dataKey="value" stroke="#8884d8" />
+              </ComposedChart>
             </div>
             <div className="chart-container chart-item-2">
               <h2>Visits by Day of Week</h2>
-              <BarChart width={600} height={300} data={dayOfWeekData}>
+              <ComposedChart width={600} height={300} data={dayOfWeekData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="label" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="value" fill="#ffc658" />
-              </BarChart>
+                <Line type="monotone" dataKey="value" stroke="#ff7300" />
+              </ComposedChart>
             </div>
             <div className="chart-container chart-item-3">
               <h2>Visits by Day of Month</h2>
-              <BarChart width={600} height={300} data={dayOfMonthData}>
+              <ComposedChart width={600} height={300} data={dayOfMonthData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="label" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="value" fill="#82ca9d" />
-              </BarChart>
+                <Line type="monotone" dataKey="value" stroke="#ffc658" />
+              </ComposedChart>
             </div>
             <div className="chart-container chart-item-4">
               <h2>Visits by Month</h2>
-              <BarChart width={600} height={300} data={monthData}>
+              <ComposedChart width={600} height={300} data={monthData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="label" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="value" fill="#8884d8" />
-              </BarChart>
+                <Line type="monotone" dataKey="value" stroke="#82ca9d" />
+              </ComposedChart>
             </div>
             <div className="chart-container tag-pie-chart">
               <PieChartArea tagsCountMap={tagsCountMap} />

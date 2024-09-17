@@ -61,6 +61,7 @@ export const FilterSection = ({
 }) => {
   // Only show items that have all selected tags
   const filteredData = dataState
+    .filter((item) => item.title && item.url)
     .filter((item) => selectedTags.every((tag) => item.tags.includes(tag)))
     .sort((a, b) => b.lastVisitTime - a.lastVisitTime);
 
